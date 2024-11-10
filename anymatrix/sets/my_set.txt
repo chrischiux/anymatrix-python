@@ -1,0 +1,17 @@
+% This is an example anymatrix set.
+% Comments start with a '%' symbol as the first character of the line.
+
+% Following are declarations of some matrices in this set.
+
+% Dembo9 matrix without any input arguments.
+core/dembo9:
+
+% Augment matrix with a matrix as an input argument.
+core/augment: [1, 1; 2, 2]
+
+% Wilkinson matrix with a single input.
+gallery/wilk: 3
+
+% Two Pascal matrices with different input arguments.
+matlab/pascal: 5, 1
+matlab/pascal: 5, 2

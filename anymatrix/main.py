@@ -1,4 +1,7 @@
 import os, re
+import importlib.util
+
+import prop_map, inv_prop_map
 
 class Anymatrix:
     def __init__(self):
@@ -16,55 +19,17 @@ class Anymatrix:
 
     def scan_filesystem(self):
         self.group_IDs = self.scan_groups()
+        self.matrix_IDs = self.scan_matrices(self.group_IDs)
+        self.properties = self.scan_properties(self.matrix_IDs)
     
     def scan_sets(self):
         sets_path = os.path.join(self.root_path, 'sets')
         set_files = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
         self.set_IDs = [os.path.splitext(f)[0] for f in set_files]
 
-    # Scan the group folders and obtain the matrix IDs.
-    def scan_matrices(self, groups):
-        for group in groups:
-            path_to_group = os.path.join(self.root_path, group, 'private')
-            m_files = [f for f in os.listdir(path_to_group) if f.endswith('.py')]
-            for m_file in m_files:
-                with open(os.path.join(path_to_group, m_file), 'r') as file:
-                    contents = file.read()
-                    if 'properties = {' in contents:
-                        self.matrix_IDs.append(os.path.splitext(m_file)[0])
-        
-        print(self.matrix_IDs)
-
-    # Scan the root folder and obtain the group IDs.
-    def scan_groups(self):
-        contents = os.listdir(self.root_path)
-        for items in contents:
-
-            # Check if item is a directory.
-            if os.path.isdir(items):
-
-                # Check if item is a group directory.
-                if self.is_group_dir(items):
-                    self.group_IDs.append(items)
-
-    # Check if a folder in anymatrix root directory is a group folder.
-    # Group directories have one private/ directory and one file named
-    # anymatrix_<dir_name>.py where <dir_name> is the directory name.
-    def is_group_dir(self, directory):
-        dir_path = os.path.join(self.root_path, directory)
-        # Check dir has two files
-        if len(os.listdir(directory)) != 2:
-            return False
-        # Check if anymatrix_<dir_name>.py exists
-        if not os.path.isfile(os.path.join(dir_path, f'anymatrix_{directory}.py')):
-            return False
-        # Check if private directory exists
-        if not os.path.isdir(os.path.join(dir_path, 'private')):
-            return False
-        return True
-    
-    def help(self):
-        print("""ANYMATRIX  Interface for accessing the Anymatrix collections.
+    def help(self, name):
+        if name == "anymatrix":
+            print("""ANYMATRIX  Interface for accessing the Anymatrix collections.
     ANYMATRIX is a user interface for the Anymatrix matrix collection.
     It provides commands to list matrices, groups and sets, search for
     matrices by properties, and obtain the matrices by their IDs.
@@ -165,32 +130,269 @@ class Anymatrix:
     P. C. Hansen: Regularization Tools version 4.0 for Matlab 7.3.
     Numer. Algorithms 46(2), 189--194 (2007).
     https://doi.org/10.1007/s11075-007-9136-9""")
+        else:
+            print("Help for other functions not implemented yet.")
+            print(name)
+
+    # Scan the group folders and obtain the matrix IDs.
+    def scan_matrices(self, groups):
+        matrix_IDs = []
+        for group in groups:
+            path_to_group = os.path.join(self.root_path, group, 'private')
+            m_files = [f for f in os.listdir(path_to_group) if f.endswith('.py')]
+            for m_file in m_files:
+                with open(os.path.join(path_to_group, m_file), 'r') as file:
+                    contents = file.read()
+                    if 'properties = [' in contents:
+                        matrix_IDs.append(f"{group}/{os.path.splitext(m_file)[0]}")
+        return matrix_IDs
+        # print(self.matrix_IDs)
+
+
+    # Scan the root folder and obtain the group IDs.
+    def scan_groups(self):
+        group_IDs = []
+        contents = os.listdir(self.root_path)
+        for items in contents:
+
+            # Check if item is a directory.
+            if os.path.isdir(f"{self.root_path}/{items}"):
+
+                # Check if item is a group directory.
+                if self.is_group_dir(items):
+                    group_IDs.append(items)
+        return group_IDs
+
+    # Check if a folder in anymatrix root directory is a group folder.
+    # Group directories have one private/ directory and one file named
+    # anymatrix_<dir_name>.py where <dir_name> is the directory name.
+    def is_group_dir(self, directory):
+        dir_path = os.path.join(self.root_path, directory)
+        # Check dir has two files
+        if len(os.listdir(dir_path)) != 2:
+            return False
+        # Check if anymatrix_<dir_name>.py exists
+        if not os.path.isfile(os.path.join(dir_path, f'anymatrix_{directory}.py')):
+            return False
+        # Check if private directory exists
+        if not os.path.isdir(os.path.join(dir_path, 'private')):
+            return False
+        return True
+    
+    def show_contents(self, group_ID):
+        if os.path.isfile(f"{self.root_path}/{group_ID}/private/Contents.py"):
+            self.type(f"{self.root_path}/{group_ID}/private/Contents.py")
+        else:
+            raise ValueError('No Contents.m exists for that group.')
+
+    def show_matrix_help(self, matrix_ID):
+        group_name = matrix_ID.split('/')[0]
+        matrix_name = matrix_ID.split('/')[1]
+        if group_name == "gallery":
+            self.help(f"private/{matrix_name}")
+        elif group_name == "matlab":
+            self.help(matrix_name)
+        else:
+            self.help(matrix_ID.replace('/', '/private/'))
+
+    def type(self, dir_path):
+        # open file
+        with open(dir_path, 'r') as file:
+            # print file contents
+            print(file.read())
+
+    def generate_matrix(self, matrix_ID, varargin):
+        group_name = matrix_ID.split('/')[0]
+        matrix_name = matrix_ID.split('/')[1]
+
+        return None
+    
+    # def get_properties(self, matrix_ID):
+    #     group_name = matrix_ID.split('/')[0]
+    #     path_to_group = os.path.join(self.root_path, group_name, 'private')
+    #     matrix_name = matrix_ID.split('/')[1]
+    #     P = []
+    #     # Get properties from the M-file of the matrix.
+    #     mfile_path = os.path.join(path_to_group, f"{matrix_name}.py")
+    #     if os.path.isfile(mfile_path):
+    #         with open(mfile_path, 'r') as file:
+    #             mfile_contents = file.read()
+    #             print(mfile_contents)
+    #     return P
+    def get_properties(self, matrix_ID):
+        group_name = matrix_ID.split('/')[0]
+        path_to_group = os.path.join(self.root_path, group_name, 'private')
+        matrix_name = matrix_ID.split('/')[1]
+        handle_name = f'anymatrix_{group_name}'
+        P = []
+
+        # Get properties from the Python file of the matrix.
+        mfile_path = os.path.join(path_to_group, f'{matrix_name}.py')
+        if os.path.isfile(mfile_path):
+            with open(mfile_path, 'r') as file:
+                mfile_contents = file.read()
+                if 'properties =' in mfile_contents or 'properties=' in mfile_contents:
+                    spec = importlib.util.spec_from_file_location(handle_name, mfile_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    P = module.properties
+                    return P
+        # Get other properties from the entry in the properties.py file.
+        # am_properties_path = os.path.join(path_to_group, 'am_properties.py')
+        # if os.path.isfile(am_properties_path):
+        #     spec = importlib.util.spec_from_file_location('am_properties', am_properties_path)
+        #     module = importlib.util.module_from_spec(spec)
+        #     spec.loader.exec_module(module)
+        #     if matrix_name in module.properties:
+        #         temp = module.properties[matrix_name]
+        #         P.extend([prop for prop in temp if prop not in P])
+        return P
+                
+
+
+    def scan_properties(self, matrix_IDs):
+        P = []
+        for matrix_ID in matrix_IDs:
+            current_properties = self.get_properties(matrix_ID)
+            # if len(current_properties) > 1:
+            #     current_properties = list(current_properties)
+            P.append(current_properties)
+
+        # Add property 'built-in' for the built-in matrices.
+        for i, matrix_ID in enumerate(matrix_IDs):
+            if any(matrix_ID.startswith(group) for group in self.built_in_groups):
+                P[i].append('built-in')
+
+        # Add parent properties if not specified.
+        M = {
+        'banded': ['tridiagonal', 'bidiagonal'],
+        'binary': ['permutation'],
+        'integer': ['binary'],
+        'nonnegative': ['binary', 'positive', 'stochastic', 'totally nonnegative'],
+        'orthogonal': ['permutation'],
+        'positive': ['totally positive'],
+        'symmetric': ['correlation', 'hankel'],
+        'positive definite': ['correlation'],
+        'totally nonnegative': ['totally positive'],
+        'triangular': ['bidiagonal']
+    }
+        I = {'real': ['complex'],
+            'scalable': ['fixed size'],
+            'square': ['rectangular']}
+        
+        for i in range(len(P)):
+            for j in range(len(I)):
+                # Find properties that can be added due to absence of some other properties.
+                if not any(prop in P[i] for prop in I[list(I.keys())[j]]) and list(I.keys())[j] not in P[i]:
+                    P[i].append(list(I.keys())[j])
+
+            j = 0
+            while j < len(M):
+                # Find parent properties of any of the properties already in the list and add them if they are not in yet.
+                if any(prop in P[i] for prop in M[list(M.keys())[j]]) and list(M.keys())[j] not in P[i]:
+                    P[i].append(list(M.keys())[j])
+                    j = 0
+                j += 1
+
+        # Check if all the properties can be recognized.
+        for i in range(len(matrix_IDs)):
+            for bad_prop in [prop for prop in P[i] if prop not in self.supported_properties]:
+                if bad_prop:
+                    print(f"Warning: Property {bad_prop} in {matrix_IDs[i]} is not recognized.")
+
+        return P
         
     def anymatrix(self, *args):
 
+        # use matlab style variable names
         nargin = len(args)
+        varargin = args
+
+        # Matrix ID pattern
+        matrix_ID_pat = r'^.*/.*$'
 
         if not self.files_scanned:
             self.scan_filesystem()
             print("Automatic anymatrix scanning done.")
 
         if nargin == 0:
-            self.help()
+            self.help("anymatrix")
             return
         
         # Parse the arguments passed to anymatrix.
+        command = varargin[0]
         if nargin >= 2:
-            for group in self.group_IDs:
-                print(group)
+            arg = varargin[1]
+            if any(c.startswith(valid_command) for c in varargin[1] for valid_command in ['properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents']):
+                command = varargin[1]
+                arg = varargin[0]
+            # Allow use of hyphens instead of underscores, but replace here.
+            if not any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
+                arg = arg.replace('-', '_')
+        # Hyphens -> underscores in matrix IDs.
+        command = command.replace('-', '_')
+
+        # Capture some common errors in the arguments.
+        if re.match(matrix_ID_pat, command):
+            if command not in self.matrix_IDs:
+                raise ValueError('Specified matrix ID was not found.')
+        elif not command.startswith(('properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents')):
+            raise ValueError('Anymatrix command was not recognized.')
+        elif nargin == 1:
+            if command.startswith(('lookfor', 'contents')):
+                raise ValueError('Please specify one more argument.')
+        elif nargin == 2:
+            if type(arg) is not str:
+                raise TypeError('This anymatrix command requires string arguments.')
+            elif command.startswith('help') or (command.startswith('properties') and re.match(matrix_ID_pat, arg)):
+                if arg not in self.matrix_IDs:
+                    raise ValueError('Specified matrix ID was not found.')
+            elif any(command.startswith(prefix) for prefix in ['groups', 'contents', 'test']):
+                if not arg in self.group_IDs:
+                    raise ValueError('The specified group ID was not found.')
+
+        # Execute the specified command.
+        if command.startswith('all'):
+            return self.matrix_IDs
+        elif command.startswith('contents'):
+            self.show_contents(arg)
+        elif command.startswith('groups'):
+            if nargin == 1:
+                return self.group_IDs
+            elif nargin == 2:
+                return [matrix_id for matrix_id in self.matrix_IDs if matrix_id.startswith(f"{arg}/")]
+            else:
+                self.update_git_group(arg, varargin[1])
+        elif command.startswith('help'):
+            if nargin == 1:
+                self.help("anymatrix")
+            else:
+                self.show_matrix_help(arg)
+        elif command.startswith('lookfor'):
+            return self.lookfor_term(arg)
+        elif command.startswith('properties'):
+            if nargin == 1:
+                return self.supported_properties
+            elif nargin == 2:
+                self.show_matrix_properties(arg)
+            else:
+                self.show_matrices_with_properties(arg)
+        else:
+            return self.generate_matrix(command, varargin[1:])
+        
 
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
-    am.anymatrix()
+    # am.anymatrix("groups", "contest")
+    # am.anymatrix("contents", "core")
+    print(am.anymatrix("properties", "core"))
+    # print(am.anymatrix("all"))
     # contents = os.listdir(root_path)
     # am.scan_groups()
     # am.scan_matrices(am.group_IDs)
-
+    # print(root_path)
+    # print(os.path.isfile(f"{root_path}/core/private/Contents.py"))
 
     # Testing code for is_group_dir()
     # contents = os.listdir(root_path)

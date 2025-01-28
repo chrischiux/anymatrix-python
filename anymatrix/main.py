@@ -135,7 +135,6 @@ class Anymatrix:
     https://doi.org/10.1007/s11075-007-9136-9""")
         else:
             print("Help for other functions not implemented yet.")
-            print(name)
 
     # Scan the group folders and obtain the matrix IDs.
     def scan_matrices(self, groups):
@@ -315,6 +314,11 @@ class Anymatrix:
                     print(f"Warning: Property {bad_prop} in {matrix_IDs[i]} is not recognized.")
 
         return P
+    
+    def show_matrix_properties(self, matrix_ID):
+        for i in range(len(self.matrix_IDs)):
+            if matrix_ID == self.matrix_IDs[i]:
+                return self.properties[i]
         
     def anymatrix(self, *args):
 
@@ -390,7 +394,7 @@ class Anymatrix:
             if nargin == 1:
                 return self.supported_properties
             elif nargin == 2:
-                self.show_matrix_properties(arg)
+                return self.show_matrix_properties(arg)
             else:
                 self.show_matrices_with_properties(arg)
         else:
@@ -401,7 +405,7 @@ if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
     # am.anymatrix()
-    print(am.anymatrix("groups", "matlab"))
+    print(am.anymatrix("properties", "core/beta"))
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core"))
     # print(am.anymatrix("all"))

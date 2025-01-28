@@ -3,6 +3,8 @@ import importlib.util
 
 import prop_map, inv_prop_map
 
+import numpy
+
 class Anymatrix:
     def __init__(self):
         self.root_path = os.path.dirname(os.path.abspath(__file__))
@@ -145,8 +147,20 @@ class Anymatrix:
                     contents = file.read()
                     if 'properties = [' in contents:
                         matrix_IDs.append(f"{group}/{os.path.splitext(m_file)[0]}")
+            
+            # Read matrix IDs that are placed in properties.m files and
+            # add them if they are not in yet from the M-files.
+            am_properties_path = os.path.join(path_to_group, 'am_properties.py')
+            if(os.path.isfile(am_properties_path)):
+                spec = importlib.util.spec_from_file_location(f"anymatrix_{group}", am_properties_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                for IDs in module.P:
+                    moreIDs = f"{group}/{IDs[0]}"
+                    if moreIDs not in matrix_IDs:
+                        matrix_IDs.append(moreIDs)
+        
         return matrix_IDs
-        # print(self.matrix_IDs)
 
 
     # Scan the root folder and obtain the group IDs.
@@ -384,9 +398,10 @@ class Anymatrix:
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
+    am.anymatrix()
     # am.anymatrix("groups", "contest")
     # am.anymatrix("contents", "core")
-    print(am.anymatrix("properties", "core"))
+    # print(am.anymatrix("properties", "core"))
     # print(am.anymatrix("all"))
     # contents = os.listdir(root_path)
     # am.scan_groups()

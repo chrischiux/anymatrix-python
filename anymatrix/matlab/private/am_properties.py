@@ -14,5 +14,5 @@ P = [
     ['spiral', ['integer', 'positive']],
     ['toeplitz', ['toeplitz', 'square', 'rectangular']],
     ['vander', []],
-    ['wilkinson', ['symmetric', 'indefinite' 'tridiagonal', 'nonnegative']],
+    ['wilkinson', ['symmetric', 'indefinite', 'tridiagonal', 'nonnegative']],
 ]

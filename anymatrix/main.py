@@ -261,7 +261,7 @@ class Anymatrix:
                 if matrix_name in prop:
                     temp = prop[1]
                     P.extend([prop for prop in temp if prop not in P])
-        print(matrix_name ,P)
+        # print(matrix_name ,P)
         return P
                 
 
@@ -288,8 +288,8 @@ class Anymatrix:
         'symmetric': ['correlation', 'hankel'],
         'positive definite': ['correlation'],
         'totally nonnegative': ['totally positive'],
-        'triangular': ['bidiagonal']
-    }
+        'triangular': ['bidiagonal']}
+
         I = {'real': ['complex'],
             'scalable': ['fixed size'],
             'square': ['rectangular']}
@@ -328,6 +328,7 @@ class Anymatrix:
         if not self.files_scanned:
             self.supported_properties = prop_list.prop_list()
             self.scan_filesystem()
+            self.files_scanned = True
             print("Automatic anymatrix scanning done.")
 
         if nargin == 0:
@@ -399,8 +400,8 @@ class Anymatrix:
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
-    am.anymatrix()
-    # am.anymatrix("groups", "contest")
+    # am.anymatrix()
+    print(am.anymatrix("groups", "matlab"))
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core"))
     # print(am.anymatrix("all"))

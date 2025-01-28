@@ -250,16 +250,17 @@ class Anymatrix:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                     P = module.properties
-                    return P
         # Get other properties from the entry in the properties.py file.
-        # am_properties_path = os.path.join(path_to_group, 'am_properties.py')
-        # if os.path.isfile(am_properties_path):
-        #     spec = importlib.util.spec_from_file_location('am_properties', am_properties_path)
-        #     module = importlib.util.module_from_spec(spec)
-        #     spec.loader.exec_module(module)
-        #     if matrix_name in module.properties:
-        #         temp = module.properties[matrix_name]
-        #         P.extend([prop for prop in temp if prop not in P])
+        am_properties_path = os.path.join(path_to_group, 'am_properties.py')
+        if os.path.isfile(am_properties_path):
+            spec = importlib.util.spec_from_file_location('am_properties', am_properties_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            for prop in module.P:
+                if matrix_name in prop:
+                    temp = prop[1]
+                    P.extend([prop for prop in temp if prop not in P])
+        print(matrix_name ,P)
         return P
                 
 

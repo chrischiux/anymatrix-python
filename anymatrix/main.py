@@ -1,7 +1,8 @@
 import os, re
 import importlib.util
 
-import prop_map, inv_prop_map
+import prop_map
+import prop_list
 
 import numpy
 
@@ -269,8 +270,6 @@ class Anymatrix:
         P = []
         for matrix_ID in matrix_IDs:
             current_properties = self.get_properties(matrix_ID)
-            # if len(current_properties) > 1:
-            #     current_properties = list(current_properties)
             P.append(current_properties)
 
         # Add property 'built-in' for the built-in matrices.
@@ -327,6 +326,7 @@ class Anymatrix:
         matrix_ID_pat = r'^.*/.*$'
 
         if not self.files_scanned:
+            self.supported_properties = prop_list.prop_list()
             self.scan_filesystem()
             print("Automatic anymatrix scanning done.")
 

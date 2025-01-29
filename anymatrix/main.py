@@ -7,32 +7,7 @@ import prop_list
 import numpy
 
 class Anymatrix:
-    def __init__(self):
-        self.root_path = os.path.dirname(os.path.abspath(__file__))
-        self.built_in_groups = [
-            'contest', 'core', 'gallery', 'hadamard', 
-            'matlab', 'nessie', 'regtools'
-        ]
-        self.files_scanned = False
-        self.set_IDs = []
-        self.group_IDs = []
-        self.matrix_IDs = []
-        self.properties = []
-        self.supported_properties = []
-
-    def scan_filesystem(self):
-        self.group_IDs = self.scan_groups()
-        self.matrix_IDs = self.scan_matrices(self.group_IDs)
-        self.properties = self.scan_properties(self.matrix_IDs)
-    
-    def scan_sets(self):
-        sets_path = os.path.join(self.root_path, 'sets')
-        set_files = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
-        self.set_IDs = [os.path.splitext(f)[0] for f in set_files]
-
-    def help(self, name):
-        if name == "anymatrix":
-            print("""ANYMATRIX  Interface for accessing the Anymatrix collections.
+    """ANYMATRIX  Interface for accessing the Anymatrix collections.
     ANYMATRIX is a user interface for the Anymatrix matrix collection.
     It provides commands to list matrices, groups and sets, search for
     matrices by properties, and obtain the matrices by their IDs.
@@ -132,7 +107,34 @@ class Anymatrix:
     (1994).  https://doi.org/10.1007/BF02149761
     P. C. Hansen: Regularization Tools version 4.0 for Matlab 7.3.
     Numer. Algorithms 46(2), 189--194 (2007).
-    https://doi.org/10.1007/s11075-007-9136-9""")
+    https://doi.org/10.1007/s11075-007-9136-9"""
+
+    def __init__(self):
+        self.root_path = os.path.dirname(os.path.abspath(__file__))
+        self.built_in_groups = [
+            'contest', 'core', 'gallery', 'hadamard', 
+            'matlab', 'nessie', 'regtools'
+        ]
+        self.files_scanned = False
+        self.set_IDs = []
+        self.group_IDs = []
+        self.matrix_IDs = []
+        self.properties = []
+        self.supported_properties = []
+
+    def scan_filesystem(self):
+        self.group_IDs = self.scan_groups()
+        self.matrix_IDs = self.scan_matrices(self.group_IDs)
+        self.properties = self.scan_properties(self.matrix_IDs)
+    
+    def scan_sets(self):
+        sets_path = os.path.join(self.root_path, 'sets')
+        set_files = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
+        self.set_IDs = [os.path.splitext(f)[0] for f in set_files]
+
+    def help(self, name):
+        if name == "anymatrix":
+            print()
         else:
             print("Help for other functions not implemented yet.")
 
@@ -161,7 +163,23 @@ class Anymatrix:
                         matrix_IDs.append(moreIDs)
         
         return matrix_IDs
-
+    
+    def search_by_properties(self, expression):
+        IDs = []
+        
+        for i, properties in enumerate(self.properties):
+            new_expression = expression
+            expression_array = expression.split()
+            for word in expression_array:
+                if word in self.supported_properties:
+                    if word in properties:
+                        new_expression = new_expression.replace(word, 'True')
+                    else:
+                        new_expression = new_expression.replace(word, 'False')
+            if eval(new_expression):
+                IDs.append(self.matrix_IDs[i])
+        return IDs
+        
 
     # Scan the root folder and obtain the group IDs.
     def scan_groups(self):
@@ -321,7 +339,6 @@ class Anymatrix:
                 return self.properties[i]
         
     def anymatrix(self, *args):
-
         # use matlab style variable names
         nargin = len(args)
         varargin = args
@@ -336,7 +353,7 @@ class Anymatrix:
             print("Automatic anymatrix scanning done.")
 
         if nargin == 0:
-            self.help("anymatrix")
+            help(Anymatrix)
             return
         
         # Parse the arguments passed to anymatrix.
@@ -385,7 +402,8 @@ class Anymatrix:
                 self.update_git_group(arg, varargin[1])
         elif command.startswith('help'):
             if nargin == 1:
-                self.help("anymatrix")
+                help(Anymatrix)
+                # self.help("anymatrix")
             else:
                 self.show_matrix_help(arg)
         elif command.startswith('lookfor'):
@@ -393,10 +411,10 @@ class Anymatrix:
         elif command.startswith('properties'):
             if nargin == 1:
                 return self.supported_properties
-            elif nargin == 2:
-                return self.show_matrix_properties(arg)
+            # elif nargin == 2:
+            #     return self.show_matrix_properties(arg)
             else:
-                self.show_matrices_with_properties(arg)
+                return self.search_by_properties(arg)
         else:
             return self.generate_matrix(command, varargin[1:])
         
@@ -404,8 +422,10 @@ class Anymatrix:
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
+    
     # am.anymatrix()
-    print(am.anymatrix("properties", "core/beta"))
+    # am.search_by_properties("symmetric and real")
+    print(am.anymatrix("properties", "not integer"))
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core"))
     # print(am.anymatrix("all"))

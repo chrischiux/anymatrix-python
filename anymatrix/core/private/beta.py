@@ -1,37 +1,35 @@
-# function [A,R,properties] = beta(n)
-# %BETA   Symmetric totally positive matrix of integers.
-# %   BETA(n) is an n-by-n symmetric totally positive matrix of integers.
-# %   It is also infinitely divisible.
-# %   [A,R] = BETA(n) returns both the matrix and its explicitly constructed
-# %   Cholesky factor R.
-
-# %   Reference:
-# %   P. Grover, V. S. Panwar and S. Reddy, Positivity Properties of Some
-# %   Special Matrices, Linear Algebra Appl. 596, 203-215, 2020.
+import numpy as np
+from scipy.special import comb
+from math import sqrt
 
 properties = ['symmetric', 'positive definite', 'integer',  'totally positive', 'infinitely divisible']
-# if nargin == 0, A = []; R = []; return, end
 
-# A = zeros(n);
+def beta(n):
+    """BETA   Symmetric totally positive matrix of integers.
+   BETA(n) is an n-by-n symmetric totally positive matrix of integers.
+   It is also infinitely divisible.
+   [A,R] = BETA(n) returns both the matrix and its explicitly constructed
+   Cholesky factor R.
 
-# for i = 1:n
-#     for j = i:n
-#         % A(i,j) = factorial(i+j-1) / (factorial(i-1)*factorial(j-1));
-#         % Avoiding overflow:
-#         t = 1;
-#         for k = 2:i
-#             t = t*(j+i-k)/(k-1);
-#         end
-#         A(i,j) = t*(j+i-1);
-#         A(j,i) = A(i,j);
-#     end
-# end
+   Reference:
+   P. Grover, V. S. Panwar and S. Reddy, Positivity Properties of Some
+   Special Matrices, Linear Algebra Appl. 596, 203-215, 2020."""
+    if n == 0:
+        return [], [], properties
 
-# if nargout < 2, return, end
+    A = np.zeros((n, n), dtype=int)
 
-# R = zeros(n);
-# for i = 1:n
-#     for j = i:n
-#         R(i,j) = nchoosek(j,i)*sqrt(i);
-#     end
-# end
+    for i in range(1,n+1):
+        for j in range(i, n+1):
+            t = 1
+            for k in range(2, i+1):
+                t = t * (j + i - k) / (k - 1)
+            A[i-1, j-1] = int(t * (j + i - 1))
+            A[j-1, i-1] = A[i-1, j-1]
+
+    R = np.zeros((n, n), dtype=float)
+    for i in range(1,n):
+        for j in range(i, n+1):
+            R[i-1, j-1] = comb(j-1, i-1) * sqrt(i - 1)
+
+    return A

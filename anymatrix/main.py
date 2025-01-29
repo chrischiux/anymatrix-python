@@ -7,107 +7,6 @@ import prop_list
 import numpy
 
 class Anymatrix:
-    """ANYMATRIX  Interface for accessing the Anymatrix collections.
-    ANYMATRIX is a user interface for the Anymatrix matrix collection.
-    It provides commands to list matrices, groups and sets, search for
-    matrices by properties, and obtain the matrices by their IDs.
-
-    The interface comes with built-in groups of matrices, but users can
-    develop their own groups and make them available to other users.
-
-    The built-in collection contains 7 groups:
-
-    contest  - the CONTEST test matrix toolbox of random matrices
-                from networks.
-    core     - miscellaneous matrices.
-    gallery  - matrices from the MATLAB gallery.
-    hadamard - a large collection of (complex) Hadamard matrices.
-    matlab   - other MATLAB matrices (not in gallery).
-    nessie   - matrices from real-life networks.
-    regtools - matrices from regularization problems.
-
-    Anymatrix accepts the following commands. All arguments are character
-    vectors or strings, except ones defined by the matrix M-files which
-    might take various types of arguments.
-
-    help anymatrix - display this information.
-    ANYMATRIX('all') - return all matrix IDs in the collection.
-    ANYMATRIX('contents', group_name) - displays Contents.m of the group
-    with a specified name group_name.
-    G = ANYMATRIX('groups') - return the available groups.
-    M = ANYMATRIX('groups', group_name) - return matrix IDs that belong
-    to the group with a specified name group_name.
-    ANYMATRIX('groups', group_name, repository) - clone or update
-    an anymatrix group stored in the specified repository.
-    ANYMATRIX('help', matrix_id) - list the help for a specified
-    matrix (anymatrix(matrix_id, 'help') also accepted).
-    M = ANYMATRIX('lookfor', pattern) - returns a list of matrix IDs
-    whose help comments contain the specified string/char pattern.
-    ANYMATRIX('properties') - show the list of recognized properties.
-    ANYMATRIX('properties', matrix_id) - list the properties of a
-    specified matrix (anymatrix(matrix_id, 'properties') also
-    accepted).
-    M = ANYMATRIX('properties', properties) - list matrices having
-    the specified properties.
-    ANYMATRIX('scan') - force a scan of the file system.
-    S = ANYMATRIX('sets') - return the available sets.
-    [s, mat1, ..., matK] = ANYMATRIX('sets', set_name) - return matrix IDs
-    in S and generate matrices in a specified set.
-    ANYMATRIX('test') - run tests of all groups, where available.
-    ANYMATRIX('test', group_name) - run tests of the specified group, if
-    available.
-    [out1, ..., outK] = ANYMATRIX(matrix_id, in1, ..., inN) - get the
-    matrix with a specified matrix id and parameters (if any) in1 to
-    inN. Some matrices supply multiple output arguments.
-
-    Shorthand commands with one or more of the starting letters are also
-    accepted, for example 'c', 'cont', 'g', 'gr', 'h', 'l', 'p', 'prop',
-    'sc', 'se', 't'.
-
-    Anymatrix supports logical queries to search for matrices by
-    properties. In the command anymatrix('properties', '[properties]'), the
-    list of properties is a single character vector containing properties
-    that have to be separated by an "and" or an "or" and can be preceded by
-    a "not". Brackets can also be included to specify precedence.
-
-    Anymatrix holds the information about the underlying database of
-    matrices in the persistent variables that are initialized by scanning
-    the data on the first call to any command. To force an update to these
-    variables use anymatrix('scan').
-
-    Documentation:
-    Nicholas J. Higham and Mantas Mikaitis, Anymatrix: An Extendable MATLAB
-    Matrix Collection, User's Guide, MIMS EPrint 2021.15, Manchester
-    Institute for Mathematical Sciences, The University of Manchester,
-    UK, October 2021.
-
-    References and acknowledgments.
-
-    The CONTEST toolbox is included with permission from
-    Alan Taylor and Desmond J. Higham.  CONTEST: A controllable test matrix
-    toolbox for MATLAB. ACM Trans. Math. Software, 35(4):26:1-26:17, 2009.
-    https://doi.org/10.1145/1462173.1462175
-
-    The Hadamard group is reproduced with permission from
-    N. J. A. Sloane, A Library of Hadamard Matrices,
-    http://neilsloane.com/hadamard/. "Anything free comes with no guarantee".
-
-    The NESSIE collection is included with permission from
-    https://outreach.mathstat.strath.ac.uk/outreach/nessie/nessie_transport.html
-    Alan Taylor and Desmond J. Higham, NESSIE: Network Example Source
-    Supporting Innovative Experimentation, in Ernesto Estrada, Maria
-    Fox, Desmond J. Higham and Gian-Luca Oppo, eds, Network Science:
-    Complexity in Nature and Technology, pp. 85-106, Springer, 2010.
-    https://doi.org/10.1007/978-1-84996-396-1_5
-
-    The regtools group is included with permission from the
-    Regulariation Tools toolbox at https://www.imm.dtu.dk/~pcha/Regutools/
-    P. C. Hansen Regularization Tools: A Matlab package for analysis and
-    solution of discrete ill-posed problems.  Numer. Algorithms 6(1), 1--35
-    (1994).  https://doi.org/10.1007/BF02149761
-    P. C. Hansen: Regularization Tools version 4.0 for Matlab 7.3.
-    Numer. Algorithms 46(2), 189--194 (2007).
-    https://doi.org/10.1007/s11075-007-9136-9"""
 
     def __init__(self):
         self.root_path = os.path.dirname(os.path.abspath(__file__))
@@ -239,8 +138,20 @@ class Anymatrix:
     def generate_matrix(self, matrix_ID, varargin):
         group_name = matrix_ID.split('/')[0]
         matrix_name = matrix_ID.split('/')[1]
-
-        return None
+        handle_name = f'anymatrix_{group_name}'
+        path_to_group = os.path.join(self.root_path, group_name, 'private')
+        if os.path.isfile(os.path.join(path_to_group, f"{matrix_name}.py")):
+            spec = importlib.util.spec_from_file_location(handle_name, os.path.join(path_to_group, f"{matrix_name}.py"))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            if hasattr(module, matrix_name):
+                generate_function = getattr(module, matrix_name)
+                result = generate_function(*varargin)
+                return result
+            else:
+                raise AttributeError(f"The module {matrix_name} does not have a 'generate' function.")
+        else:
+            raise FileNotFoundError(f"The file {matrix_name}.py does not exist in the path {path_to_group}.")
     
     # def get_properties(self, matrix_ID):
     #     group_name = matrix_ID.split('/')[0]
@@ -342,6 +253,107 @@ class Anymatrix:
                 return self.properties[i]
         
     def anymatrix(self, *args):
+        """ANYMATRIX  Interface for accessing the Anymatrix collections.
+    ANYMATRIX is a user interface for the Anymatrix matrix collection.
+    It provides commands to list matrices, groups and sets, search for
+    matrices by properties, and obtain the matrices by their IDs.
+
+    The interface comes with built-in groups of matrices, but users can
+    develop their own groups and make them available to other users.
+
+    The built-in collection contains 7 groups:
+
+    contest  - the CONTEST test matrix toolbox of random matrices
+                from networks.
+    core     - miscellaneous matrices.
+    gallery  - matrices from the MATLAB gallery.
+    hadamard - a large collection of (complex) Hadamard matrices.
+    matlab   - other MATLAB matrices (not in gallery).
+    nessie   - matrices from real-life networks.
+    regtools - matrices from regularization problems.
+
+    Anymatrix accepts the following commands. All arguments are character
+    vectors or strings, except ones defined by the matrix M-files which
+    might take various types of arguments.
+
+    help anymatrix - display this information.
+    ANYMATRIX('all') - return all matrix IDs in the collection.
+    ANYMATRIX('contents', group_name) - displays Contents.m of the group
+    with a specified name group_name.
+    G = ANYMATRIX('groups') - return the available groups.
+    M = ANYMATRIX('groups', group_name) - return matrix IDs that belong
+    to the group with a specified name group_name.
+    ANYMATRIX('groups', group_name, repository) - clone or update
+    an anymatrix group stored in the specified repository.
+    ANYMATRIX('help', matrix_id) - list the help for a specified
+    matrix (anymatrix(matrix_id, 'help') also accepted).
+    M = ANYMATRIX('lookfor', pattern) - returns a list of matrix IDs
+    whose help comments contain the specified string/char pattern.
+    ANYMATRIX('properties') - show the list of recognized properties.
+    ANYMATRIX('properties', matrix_id) - list the properties of a
+    specified matrix (anymatrix(matrix_id, 'properties') also
+    accepted).
+    M = ANYMATRIX('properties', properties) - list matrices having
+    the specified properties.
+    ANYMATRIX('scan') - force a scan of the file system.
+    S = ANYMATRIX('sets') - return the available sets.
+    [s, mat1, ..., matK] = ANYMATRIX('sets', set_name) - return matrix IDs
+    in S and generate matrices in a specified set.
+    ANYMATRIX('test') - run tests of all groups, where available.
+    ANYMATRIX('test', group_name) - run tests of the specified group, if
+    available.
+    [out1, ..., outK] = ANYMATRIX(matrix_id, in1, ..., inN) - get the
+    matrix with a specified matrix id and parameters (if any) in1 to
+    inN. Some matrices supply multiple output arguments.
+
+    Shorthand commands with one or more of the starting letters are also
+    accepted, for example 'c', 'cont', 'g', 'gr', 'h', 'l', 'p', 'prop',
+    'sc', 'se', 't'.
+
+    Anymatrix supports logical queries to search for matrices by
+    properties. In the command anymatrix('properties', '[properties]'), the
+    list of properties is a single character vector containing properties
+    that have to be separated by an "and" or an "or" and can be preceded by
+    a "not". Brackets can also be included to specify precedence.
+
+    Anymatrix holds the information about the underlying database of
+    matrices in the persistent variables that are initialized by scanning
+    the data on the first call to any command. To force an update to these
+    variables use anymatrix('scan').
+
+    Documentation:
+    Nicholas J. Higham and Mantas Mikaitis, Anymatrix: An Extendable MATLAB
+    Matrix Collection, User's Guide, MIMS EPrint 2021.15, Manchester
+    Institute for Mathematical Sciences, The University of Manchester,
+    UK, October 2021.
+
+    References and acknowledgments.
+
+    The CONTEST toolbox is included with permission from
+    Alan Taylor and Desmond J. Higham.  CONTEST: A controllable test matrix
+    toolbox for MATLAB. ACM Trans. Math. Software, 35(4):26:1-26:17, 2009.
+    https://doi.org/10.1145/1462173.1462175
+
+    The Hadamard group is reproduced with permission from
+    N. J. A. Sloane, A Library of Hadamard Matrices,
+    http://neilsloane.com/hadamard/. "Anything free comes with no guarantee".
+
+    The NESSIE collection is included with permission from
+    https://outreach.mathstat.strath.ac.uk/outreach/nessie/nessie_transport.html
+    Alan Taylor and Desmond J. Higham, NESSIE: Network Example Source
+    Supporting Innovative Experimentation, in Ernesto Estrada, Maria
+    Fox, Desmond J. Higham and Gian-Luca Oppo, eds, Network Science:
+    Complexity in Nature and Technology, pp. 85-106, Springer, 2010.
+    https://doi.org/10.1007/978-1-84996-396-1_5
+
+    The regtools group is included with permission from the
+    Regulariation Tools toolbox at https://www.imm.dtu.dk/~pcha/Regutools/
+    P. C. Hansen Regularization Tools: A Matlab package for analysis and
+    solution of discrete ill-posed problems.  Numer. Algorithms 6(1), 1--35
+    (1994).  https://doi.org/10.1007/BF02149761
+    P. C. Hansen: Regularization Tools version 4.0 for Matlab 7.3.
+    Numer. Algorithms 46(2), 189--194 (2007).
+    https://doi.org/10.1007/s11075-007-9136-9"""
         # use matlab style variable names
         nargin = len(args)
         varargin = args
@@ -356,18 +368,18 @@ class Anymatrix:
             print("Automatic anymatrix scanning done.")
 
         if nargin == 0:
-            help(Anymatrix)
+            help(Anymatrix.anymatrix)
             return
         
         # Parse the arguments passed to anymatrix.
         command = varargin[0]
         if nargin >= 2:
             arg = varargin[1]
-            if any(c.startswith(valid_command) for c in varargin[1] for valid_command in ['properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents']):
+            if type(varargin[1]) is str and any(c.startswith(valid_command) for c in varargin[1] for valid_command in ['properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents']):
                 command = varargin[1]
                 arg = varargin[0]
             # Allow use of hyphens instead of underscores, but replace here.
-            if not any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
+            if type(varargin[1]) is str and not any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
                 arg = arg.replace('-', '_')
         # Hyphens -> underscores in matrix IDs.
         command = command.replace('-', '_')
@@ -405,7 +417,7 @@ class Anymatrix:
                 self.update_git_group(arg, varargin[1])
         elif command.startswith('help'):
             if nargin == 1:
-                help(Anymatrix)
+                help(Anymatrix.anymatrix)
             else:
                 self.show_matrix_help(arg)
         elif command.startswith('lookfor'):
@@ -427,7 +439,7 @@ if __name__ == "__main__":
     
     # am.anymatrix()
     # am.search_by_properties("symmetric and real")
-    print(am.anymatrix("properties", "core"))
+    print(am.anymatrix('core/beta',5))
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core/beta"))
     # print(am.anymatrix("all"))

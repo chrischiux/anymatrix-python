@@ -176,8 +176,11 @@ class Anymatrix:
                         new_expression = new_expression.replace(word, 'True')
                     else:
                         new_expression = new_expression.replace(word, 'False')
-            if eval(new_expression):
-                IDs.append(self.matrix_IDs[i])
+            try:
+                if eval(new_expression):
+                    IDs.append(self.matrix_IDs[i])
+            except:
+                pass
         return IDs
         
 
@@ -403,7 +406,6 @@ class Anymatrix:
         elif command.startswith('help'):
             if nargin == 1:
                 help(Anymatrix)
-                # self.help("anymatrix")
             else:
                 self.show_matrix_help(arg)
         elif command.startswith('lookfor'):
@@ -411,8 +413,8 @@ class Anymatrix:
         elif command.startswith('properties'):
             if nargin == 1:
                 return self.supported_properties
-            # elif nargin == 2:
-            #     return self.show_matrix_properties(arg)
+            elif arg in self.matrix_IDs:
+                return self.show_matrix_properties(arg)
             else:
                 return self.search_by_properties(arg)
         else:
@@ -425,9 +427,9 @@ if __name__ == "__main__":
     
     # am.anymatrix()
     # am.search_by_properties("symmetric and real")
-    print(am.anymatrix("properties", "not integer"))
+    print(am.anymatrix("properties", "core"))
     # am.anymatrix("contents", "core")
-    # print(am.anymatrix("properties", "core"))
+    # print(am.anymatrix("properties", "core/beta"))
     # print(am.anymatrix("all"))
     # contents = os.listdir(root_path)
     # am.scan_groups()

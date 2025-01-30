@@ -31,12 +31,6 @@ class Anymatrix:
         set_files = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
         self.set_IDs = [os.path.splitext(f)[0] for f in set_files]
 
-    def help(self, name):
-        if name == "anymatrix":
-            print()
-        else:
-            print("Help for other functions not implemented yet.")
-
     # Scan the group folders and obtain the matrix IDs.
     def scan_matrices(self, groups):
         matrix_IDs = []
@@ -117,17 +111,27 @@ class Anymatrix:
         if os.path.isfile(f"{self.root_path}/{group_ID}/private/Contents.py"):
             self.type(f"{self.root_path}/{group_ID}/private/Contents.py")
         else:
-            raise ValueError('No Contents.m exists for that group.')
+            raise ValueError('No Contents.py exists for that group.')
 
     def show_matrix_help(self, matrix_ID):
         group_name = matrix_ID.split('/')[0]
         matrix_name = matrix_ID.split('/')[1]
-        if group_name == "gallery":
-            self.help(f"private/{matrix_name}")
-        elif group_name == "matlab":
-            self.help(matrix_name)
-        else:
-            self.help(matrix_ID.replace('/', '/private/'))
+        handle_name = f'anymatrix_{group_name}'
+        path_to_group = os.path.join(self.root_path, group_name, 'private')
+        if os.path.isfile(os.path.join(path_to_group, f"{matrix_name}.py")):
+            spec = importlib.util.spec_from_file_location(handle_name, os.path.join(path_to_group, f"{matrix_name}.py"))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            if hasattr(module, matrix_name):
+                help(getattr(module, matrix_name))
+            else:
+                raise AttributeError(f"The module {matrix_name} does not have a 'generate' function.")
+        # if group_name == "gallery":
+        #     self.help(f"private/{matrix_name}")
+        # elif group_name == "matlab":
+        #     self.help(matrix_name)
+        # else:
+        #     self.help(matrix_ID.replace('/', '/private/'))
 
     def type(self, dir_path):
         # open file
@@ -432,14 +436,14 @@ class Anymatrix:
         else:
             return self.generate_matrix(command, varargin[1:])
         
-
+import numpy as np
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
     
     # am.anymatrix()
     # am.search_by_properties("symmetric and real")
-    print(am.anymatrix('core/beta',5))
+    print(am.anymatrix('help','matlab/hankel'))
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core/beta"))
     # print(am.anymatrix("all"))

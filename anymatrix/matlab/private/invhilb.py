@@ -1,5 +1,4 @@
 import rogues.matrices.hilb as rogues_hilb
-import numpy as np
 from numpy.linalg import inv
 
 def invhilb(n, m=0):

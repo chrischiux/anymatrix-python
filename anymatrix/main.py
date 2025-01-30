@@ -125,7 +125,7 @@ class Anymatrix:
             if hasattr(module, matrix_name):
                 help(getattr(module, matrix_name))
             else:
-                raise AttributeError(f"The module {matrix_name} does not have a 'generate' function.")
+                raise AttributeError(f"The module {matrix_name} not found.")
         # if group_name == "gallery":
         #     self.help(f"private/{matrix_name}")
         # elif group_name == "matlab":
@@ -153,9 +153,9 @@ class Anymatrix:
                 result = generate_function(*varargin)
                 return result
             else:
-                raise AttributeError(f"The module {matrix_name} does not have a 'generate' function.")
+                raise AttributeError(f"module {matrix_name} not found")
         else:
-            raise FileNotFoundError(f"The file {matrix_name}.py does not exist in the path {path_to_group}.")
+            raise FileNotFoundError(f"File {matrix_name}.py does not exist in path {path_to_group}.")
     
     # def get_properties(self, matrix_ID):
     #     group_name = matrix_ID.split('/')[0]
@@ -443,7 +443,9 @@ if __name__ == "__main__":
     
     # am.anymatrix()
     # am.search_by_properties("symmetric and real")
-    print(am.anymatrix('help','matlab/hankel'))
+    A = am.anymatrix('matlab/hilb', 3)
+    B = am.anymatrix('matlab/invhilb', 3)
+    print(A*B)
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core/beta"))
     # print(am.anymatrix("all"))

@@ -32,4 +32,4 @@ def beta(n):
         for j in range(i, n+1):
             R[i-1, j-1] = comb(j-1, i-1) * sqrt(i - 1)
 
-    return A
+    return A, R

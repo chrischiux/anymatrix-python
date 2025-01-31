@@ -22,15 +22,106 @@ class Anymatrix:
         self.supported_properties = []
 
     def scan_filesystem(self):
+        self.set_IDs = self.scan_sets()
         self.group_IDs = self.scan_groups()
         self.matrix_IDs = self.scan_matrices(self.group_IDs)
         self.properties = self.scan_properties(self.matrix_IDs)
     
     def scan_sets(self):
-        sets_path = os.path.join(self.root_path, 'sets')
-        set_files = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
-        self.set_IDs = [os.path.splitext(f)[0] for f in set_files]
+        """Scan the sets folder and obtain the set IDs."""
 
+        sets_path = os.path.join(self.root_path, 'sets')
+        IDs = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
+
+        # Remove '.txt' extensions from the IDs.
+        IDs = [os.path.splitext(file)[0] for file in IDs]
+
+        return IDs
+    # Scan the group folders and obtain the matrix IDs.
+    def scan_matrices(self, groups):
+        matrix_IDs = []
+        for group in groups:
+            path_to_group = os.path.join(self.root_path, group, 'private')
+            m_files = [f for f in os.listdir(path_to_group) if f.endswith('.py')]
+            for m_file in m_files:
+                with open(os.path.join(path_to_group, m_file), 'r') as file:
+                    contents = file.read()
+                    if 'properties = [' in contents:
+                        matrix_IDs.append(f"{group}/{os.path.splitext(m_file)[0]}")
+            
+            # Read matrix IDs that are placed in properties.m files and
+            # add them if they are not in yet from the M-files.
+            am_properties_path = os.path.join(path_to_group, 'am_properties.py')
+            if(os.path.isfile(am_properties_path)):
+                spec = importlib.util.spec_from_file_location(f"anymatrix_{group}", am_properties_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                for IDs in module.P:
+                    moreIDs = f"{group}/{IDs[0]}"
+                    if moreIDs not in matrix_IDs:
+                        matrix_IDs.append(moreIDs)
+        
+        return matrix_IDs
+    
+    def search_by_properties(self, expression):
+        IDs = []
+        
+        for i, properties in enumerate(self.properties):
+            new_expression = expression
+            expression_array = expression.split()
+            for word in expression_array:
+                if word in self.supported_properties:
+                    if word in properties:
+                        new_expression = new_expression.replace(word, 'True')
+                    else:
+                        new_expression = new_expression.replace(word, 'False')
+            try:
+                if eval(new_expression):
+                    IDs.append(self.matrix_IDs[i])
+            except:
+                pass
+        return IDs
+        
+
+import os, re
+import importlib.util
+
+import prop_map
+import prop_list
+
+import numpy
+
+class Anymatrix:
+
+    def __init__(self):
+        self.root_path = os.path.dirname(os.path.abspath(__file__))
+        self.built_in_groups = [
+            'contest', 'core', 'gallery', 'hadamard', 
+            'matlab', 'nessie', 'regtools'
+        ]
+        self.files_scanned = False
+        self.set_IDs = []
+        self.group_IDs = []
+        self.matrix_IDs = []
+        self.properties = []
+        self.supported_properties = []
+
+    def scan_filesystem(self):
+        self.set_IDs = self.scan_sets()
+        self.group_IDs = self.scan_groups()
+        self.matrix_IDs = self.scan_matrices(self.group_IDs)
+        self.properties = self.scan_properties(self.matrix_IDs)
+    
+    def scan_sets(self):
+        """Scan the sets folder and obtain the set IDs."""
+
+        sets_path = os.path.join(self.root_path, 'sets')
+        IDs = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
+
+        # Remove '.txt' extensions from the IDs.
+        IDs = [os.path.splitext(file)[0] for file in IDs]
+
+        return IDs
     # Scan the group folders and obtain the matrix IDs.
     def scan_matrices(self, groups):
         matrix_IDs = []
@@ -255,6 +346,36 @@ class Anymatrix:
         for i in range(len(self.matrix_IDs)):
             if matrix_ID == self.matrix_IDs[i]:
                 return self.properties[i]
+            
+    def matlab_format_parser(self, s):
+        parameter = []
+        i = 0
+        while i < len(s):
+            if s[i] == '[':
+                # Find the closing bracket
+                j = i
+                while s[j] != ']':
+                    j += 1
+                # Extract the array string and convert to NumPy array
+                array_str = s[i+1:j]
+                # check if input is matrix or vector
+                if ';' in array_str:
+                    rows = array_str.split(';')
+                    np_array = np.vstack([np.fromstring(row, sep=',') for row in rows])
+                    parameter.append(np.array(np_array))
+                else:
+                    parameter.append(np.fromstring(array_str, sep=','))
+                i = j + 1
+            elif s[i].isdigit() or (s[i] == '-' and s[i+1].isdigit()):
+                # Extract the integer
+                j = i
+                while j < len(s) and (s[j].isdigit() or s[j] == '-'):
+                    j += 1
+                parameter.append(int(s[i:j]))
+                i = j
+            else:
+                i += 1
+        return tuple(parameter)
         
     def anymatrix(self, *args):
         """ANYMATRIX  Interface for accessing the Anymatrix collections.
@@ -433,6 +554,36 @@ class Anymatrix:
                 return self.show_matrix_properties(arg)
             else:
                 return self.search_by_properties(arg)
+        # Scan command
+        elif command.startswith('scan'):
+            self.scan_filesystem()
+            print("Anymatrix scanning done.")
+        # Sets command
+        elif command.startswith('sets'):
+            if nargin == 1:
+                return self.set_IDs
+            else:
+                S = [[]]
+                # open txt file
+                with open(f"{self.root_path}/sets/{arg}.txt", 'r') as file:
+                    # read file contents
+                    for line in file:
+                        # find lines with set members
+                        if ":" in line and "%" not in line:
+                            # split line into matrix ID and parameters
+                            matrix_ID, parameter = line.split(':', 1)
+                            S[0].append([matrix_ID, parameter.strip()])
+                            
+                            # parse the parameters
+                            parameter = parameter.strip()
+                            parameter = self.matlab_format_parser(parameter)
+                            # generate matrices
+                            A = self.generate_matrix(matrix_ID, parameter)
+                            S.append(A)
+                return S
+
+                    
+
         else:
             return self.generate_matrix(command, varargin[1:])
         
@@ -443,22 +594,12 @@ if __name__ == "__main__":
     
     # am.anymatrix()
     # am.search_by_properties("symmetric and real")
-    A = am.anymatrix('matlab/hilb', 3)
-    B = am.anymatrix('matlab/invhilb', 3)
-    print(A*B)
+    A = am.anymatrix('sets', "my_set")
+    # A = am.anymatrix('matlab/hankel', np.array([5,7]), np.array([1,4]))
+
+    print(A)
+    # print(am.anymatrix('matlab/hilb', 4, 5))
     # am.anymatrix("contents", "core")
     # print(am.anymatrix("properties", "core/beta"))
-    # print(am.anymatrix("all"))
-    # contents = os.listdir(root_path)
-    # am.scan_groups()
-    # am.scan_matrices(am.group_IDs)
-    # print(root_path)
-    # print(os.path.isfile(f"{root_path}/core/private/Contents.py"))
-
-    # Testing code for is_group_dir()
-    # contents = os.listdir(root_path)
-    # for dir in contents:
-    #     if os.path.isdir(dir):
-    #         print(dir)
-    #         print(am.is_group_dir(dir))
         
+    

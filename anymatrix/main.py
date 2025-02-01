@@ -73,11 +73,11 @@ class Anymatrix:
             for i in range(len(expression_array)-1):
                 # Combine 2 word properties into one word.
                 if expression_array[i] not in ['and', 'or', 'not'] and expression_array[i+1] not in ['and', 'or', 'not']:
-                    expression_array[i] = expression_array[i] + " " +expression_array[i+1]
+                    expression_array[i] = expression_array[i] + "-" +expression_array[i+1]
                     expression_array.pop(i+1)
                 # Replace hyphens with spaces.
-                elif '-' in expression_array[i]:
-                    expression_array[i] = expression_array[i].replace('-', ' ')
+                # elif '-' in expression_array[i]:
+                #     expression_array[i] = expression_array[i].replace('-', ' ')
             
             # Create logical expression for evaluation
             for word in expression_array:
@@ -124,6 +124,26 @@ class Anymatrix:
             return False
         return True
     
+    def lookfor_term(self, term):
+        found_IDs = []
+        for matrix_ID in self.matrix_IDs:
+            group_name = matrix_ID.split('/')[0]
+            matrix_name = matrix_ID.split('/')[1]
+            handle_name = f'anymatrix_{group_name}_{matrix_name}'
+            path_to_group = os.path.join(self.root_path, group_name, 'private')
+
+            if os.path.isfile(os.path.join(path_to_group, f"{matrix_name}.py")):
+                spec = importlib.util.spec_from_file_location(handle_name, os.path.join(path_to_group, f"{matrix_name}.py"))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                if hasattr(module, matrix_name):
+                    function = getattr(module, matrix_name)
+
+                    # Check if docstring exist and term is in docstring of function
+                    if function.__doc__ is not None and term in function.__doc__:
+                        found_IDs.append(matrix_ID)
+        return found_IDs
+
     def show_contents(self, group_ID):
         if os.path.isfile(f"{self.root_path}/{group_ID}/private/Contents.py"):
             self.type(f"{self.root_path}/{group_ID}/private/Contents.py")
@@ -410,7 +430,7 @@ class Anymatrix:
                 command = varargin[1]
                 arg = varargin[0]
             # Allow use of hyphens instead of underscores, but replace here.
-            if type(varargin[1]) is str and not any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
+            if type(varargin[1]) is str and any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
                 arg = arg.replace('-', '_')
         # Hyphens -> underscores in matrix IDs.
         command = command.replace('-', '_')
@@ -419,55 +439,61 @@ class Anymatrix:
         if re.match(matrix_ID_pat, command):
             if command not in self.matrix_IDs:
                 raise ValueError('Specified matrix ID was not found.')
-        elif not command.startswith(('properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents')):
+        elif not any([x.startswith(command) for x in ['properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents']]):
             raise ValueError('Anymatrix command was not recognized.')
         elif nargin == 1:
-            if command.startswith(('lookfor', 'contents')):
+            if any([x.startswith(command) for x in ['lookfor', 'contents']]):
                 raise ValueError('Please specify one more argument.')
         elif nargin == 2:
             if type(arg) is not str:
                 raise TypeError('This anymatrix command requires string arguments.')
-            elif command.startswith('help') or (command.startswith('properties') and re.match(matrix_ID_pat, arg)):
+            elif 'help'.startswith(command) or ('properties'.startswith(command) and re.match(matrix_ID_pat, arg)):
                 if arg not in self.matrix_IDs:
                     raise ValueError('Specified matrix ID was not found.')
-            elif any(command.startswith(prefix) for prefix in ['groups', 'contents', 'test']):
+            elif any(prefix.startswith(command) for prefix in ['groups', 'contents', 'test']):
                 if not arg in self.group_IDs:
                     raise ValueError('The specified group ID was not found.')
 
         # Execute the specified command.
-        if command.startswith('all'):
+        if 'all'.startswith(command):
             return self.matrix_IDs
-        elif command.startswith('contents'):
+        
+        elif 'contents'.startswith(command):
             self.show_contents(arg)
-        elif command.startswith('groups'):
+        
+        elif 'groups'.startswith(command):
             if nargin == 1:
                 return self.group_IDs
             elif nargin == 2:
                 return [matrix_id for matrix_id in self.matrix_IDs if matrix_id.startswith(f"{arg}/")]
             else:
                 self.update_git_group(arg, varargin[1])
-        elif command.startswith('help'):
+        
+        elif 'help'.startswith(command):
             if nargin == 1:
                 help(Anymatrix.anymatrix)
             else:
                 self.show_matrix_help(arg)
-        elif arg.startswith('help') and command in self.matrix_IDs:
-            self.show_matrix_help(command)
-        elif command.startswith('lookfor'):
+        
+        elif 'lookfor'.startswith(command):
             return self.lookfor_term(arg)
-        elif command.startswith('properties'):
+        
+        # elif command.startswith('properties'):
+        elif 'properties'.startswith(command):
             if nargin == 1:
                 return self.supported_properties
             elif arg in self.matrix_IDs:
                 return self.show_matrix_properties(arg)
             else:
                 return self.search_by_properties(arg)
+        
         # Scan command
-        elif command.startswith('scan'):
+        elif 'scan'.startswith(command):
             self.scan_filesystem()
             print("Anymatrix scanning done.")
+        
         # Sets command
-        elif command.startswith('sets'):
+        elif 'sets'.startswith(command):
             if nargin == 1:
                 return self.set_IDs
             else:
@@ -489,6 +515,13 @@ class Anymatrix:
                             A = self.generate_matrix(matrix_ID, parameter)
                             S.append(A)
                 return S
+        # command & argument swaped.
+        elif command in self.matrix_IDs and (arg == ('help') or arg ==('properties')):
+            if 'help'.startswith(arg):
+                self.show_matrix_help(command)
+            elif 'properties'.startswith(arg):
+                return self.show_matrix_properties(command)
+        
         else:
             return self.generate_matrix(command, varargin[1:])
         
@@ -497,4 +530,4 @@ if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
     
-    am.anymatrix('properties','integer and positive definite')
+    print(am.anymatrix('lookfor',"also"))

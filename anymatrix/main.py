@@ -69,91 +69,17 @@ class Anymatrix:
         for i, properties in enumerate(self.properties):
             new_expression = expression
             expression_array = expression.split()
-            for word in expression_array:
-                if word in self.supported_properties:
-                    if word in properties:
-                        new_expression = new_expression.replace(word, 'True')
-                    else:
-                        new_expression = new_expression.replace(word, 'False')
-            try:
-                if eval(new_expression):
-                    IDs.append(self.matrix_IDs[i])
-            except:
-                pass
-        return IDs
-        
-
-import os, re
-import importlib.util
-
-import prop_map
-import prop_list
-
-import numpy
-
-class Anymatrix:
-
-    def __init__(self):
-        self.root_path = os.path.dirname(os.path.abspath(__file__))
-        self.built_in_groups = [
-            'contest', 'core', 'gallery', 'hadamard', 
-            'matlab', 'nessie', 'regtools'
-        ]
-        self.files_scanned = False
-        self.set_IDs = []
-        self.group_IDs = []
-        self.matrix_IDs = []
-        self.properties = []
-        self.supported_properties = []
-
-    def scan_filesystem(self):
-        self.set_IDs = self.scan_sets()
-        self.group_IDs = self.scan_groups()
-        self.matrix_IDs = self.scan_matrices(self.group_IDs)
-        self.properties = self.scan_properties(self.matrix_IDs)
-    
-    def scan_sets(self):
-        """Scan the sets folder and obtain the set IDs."""
-
-        sets_path = os.path.join(self.root_path, 'sets')
-        IDs = [f for f in os.listdir(sets_path) if f.endswith('.txt')]
-
-        # Remove '.txt' extensions from the IDs.
-        IDs = [os.path.splitext(file)[0] for file in IDs]
-
-        return IDs
-    # Scan the group folders and obtain the matrix IDs.
-    def scan_matrices(self, groups):
-        matrix_IDs = []
-        for group in groups:
-            path_to_group = os.path.join(self.root_path, group, 'private')
-            m_files = [f for f in os.listdir(path_to_group) if f.endswith('.py')]
-            for m_file in m_files:
-                with open(os.path.join(path_to_group, m_file), 'r') as file:
-                    contents = file.read()
-                    if 'properties = [' in contents:
-                        matrix_IDs.append(f"{group}/{os.path.splitext(m_file)[0]}")
             
-            # Read matrix IDs that are placed in properties.m files and
-            # add them if they are not in yet from the M-files.
-            am_properties_path = os.path.join(path_to_group, 'am_properties.py')
-            if(os.path.isfile(am_properties_path)):
-                spec = importlib.util.spec_from_file_location(f"anymatrix_{group}", am_properties_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                for IDs in module.P:
-                    moreIDs = f"{group}/{IDs[0]}"
-                    if moreIDs not in matrix_IDs:
-                        matrix_IDs.append(moreIDs)
-        
-        return matrix_IDs
-    
-    def search_by_properties(self, expression):
-        IDs = []
-        
-        for i, properties in enumerate(self.properties):
-            new_expression = expression
-            expression_array = expression.split()
+            for i in range(len(expression_array)-1):
+                # Combine 2 word properties into one word.
+                if expression_array[i] not in ['and', 'or', 'not'] and expression_array[i+1] not in ['and', 'or', 'not']:
+                    expression_array[i] = expression_array[i] + " " +expression_array[i+1]
+                    expression_array.pop(i+1)
+                # Replace hyphens with spaces.
+                elif '-' in expression_array[i]:
+                    expression_array[i] = expression_array[i].replace('-', ' ')
+            
+            # Create logical expression for evaluation
             for word in expression_array:
                 if word in self.supported_properties:
                     if word in properties:
@@ -217,12 +143,6 @@ class Anymatrix:
                 help(getattr(module, matrix_name))
             else:
                 raise AttributeError(f"The module {matrix_name} not found.")
-        # if group_name == "gallery":
-        #     self.help(f"private/{matrix_name}")
-        # elif group_name == "matlab":
-        #     self.help(matrix_name)
-        # else:
-        #     self.help(matrix_ID.replace('/', '/private/'))
 
     def type(self, dir_path):
         # open file
@@ -247,19 +167,7 @@ class Anymatrix:
                 raise AttributeError(f"module {matrix_name} not found")
         else:
             raise FileNotFoundError(f"File {matrix_name}.py does not exist in path {path_to_group}.")
-    
-    # def get_properties(self, matrix_ID):
-    #     group_name = matrix_ID.split('/')[0]
-    #     path_to_group = os.path.join(self.root_path, group_name, 'private')
-    #     matrix_name = matrix_ID.split('/')[1]
-    #     P = []
-    #     # Get properties from the M-file of the matrix.
-    #     mfile_path = os.path.join(path_to_group, f"{matrix_name}.py")
-    #     if os.path.isfile(mfile_path):
-    #         with open(mfile_path, 'r') as file:
-    #             mfile_contents = file.read()
-    #             print(mfile_contents)
-    #     return P
+
     def get_properties(self, matrix_ID):
         group_name = matrix_ID.split('/')[0]
         path_to_group = os.path.join(self.root_path, group_name, 'private')
@@ -287,10 +195,7 @@ class Anymatrix:
                 if matrix_name in prop:
                     temp = prop[1]
                     P.extend([prop for prop in temp if prop not in P])
-        # print(matrix_name ,P)
         return P
-                
-
 
     def scan_properties(self, matrix_IDs):
         P = []
@@ -348,6 +253,7 @@ class Anymatrix:
                 return self.properties[i]
             
     def matlab_format_parser(self, s):
+        """Function to parse sets in MATLAB format and return the parameters as a tuple"""
         parameter = []
         i = 0
         while i < len(s):
@@ -545,6 +451,8 @@ class Anymatrix:
                 help(Anymatrix.anymatrix)
             else:
                 self.show_matrix_help(arg)
+        elif arg.startswith('help') and command in self.matrix_IDs:
+            self.show_matrix_help(command)
         elif command.startswith('lookfor'):
             return self.lookfor_term(arg)
         elif command.startswith('properties'):
@@ -581,9 +489,6 @@ class Anymatrix:
                             A = self.generate_matrix(matrix_ID, parameter)
                             S.append(A)
                 return S
-
-                    
-
         else:
             return self.generate_matrix(command, varargin[1:])
         
@@ -592,14 +497,4 @@ if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
     
-    # am.anymatrix()
-    # am.search_by_properties("symmetric and real")
-    A = am.anymatrix('sets', "my_set")
-    # A = am.anymatrix('matlab/hankel', np.array([5,7]), np.array([1,4]))
-
-    print(A)
-    # print(am.anymatrix('matlab/hilb', 4, 5))
-    # am.anymatrix("contents", "core")
-    # print(am.anymatrix("properties", "core/beta"))
-        
-    
+    am.anymatrix('properties','integer and positive definite')

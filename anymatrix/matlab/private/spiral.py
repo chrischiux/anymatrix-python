@@ -1,7 +1,11 @@
 import numpy as np
 
 def spiral(n):
-    """"""
+    """
+    spiral   Spiral matrix.
+       spiral(n) is an n-by-n matrix with elements 1:n^2 arranged in a
+       spiral pattern. strting from the center. moving right, down, left, up, etc.
+    """
     matrix = np.zeros((n, n), dtype=int)
     num = 1
     # Start from the middle matlab style

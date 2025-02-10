@@ -1,6 +1,7 @@
 import numpy as np
 
 def spiral(n):
+    """"""
     matrix = np.zeros((n, n), dtype=int)
     num = 1
     # Start from the middle matlab style

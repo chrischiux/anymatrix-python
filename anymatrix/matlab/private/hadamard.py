@@ -19,5 +19,3 @@ def hadamard(n):
     """
     
     return rogues_hadamard(n)
-
-print(hadamard(4))

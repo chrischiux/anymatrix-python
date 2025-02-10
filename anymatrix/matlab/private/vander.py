@@ -4,7 +4,7 @@ def vander(p):
     VAND   Vandermonde matrix.
        Produced useing np.vander
     """
-    if p == int or p == float:
+    if type(p) is int or type(p) is float:
       return 1
     else:
       return np.vander(p)

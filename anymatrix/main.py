@@ -21,6 +21,9 @@ class Anymatrix:
         self.properties = []
         self.supported_properties = []
 
+        # self.scan_filesystem()
+
+
     def scan_filesystem(self):
         self.set_IDs = self.scan_sets()
         self.group_IDs = self.scan_groups()
@@ -532,12 +535,14 @@ class Anymatrix:
         
         # Check which properties recognized by anymatrix have tests and throw
         # warnings for those that can't be tested.
-        if warnings_on:
-            for prop in self.supported_properties:
-                if not os.path.isfile(self.root_path + f'/testing/private/test_{prop}.py'):
+        supported_properties = []
+        for prop in self.supported_properties:
+            if not os.path.isfile(self.root_path + f'/testing/private/test_{prop}.py'):
+                if warnings_on:
                     print(f"Test for property {prop} was not found in anymatrix.")
+            else:
+                supported_properties.append(prop)
                     
-        M = self.matrix_IDs
         
         test_function_file = root_path + '/anymatrix_func_based_tests.py'
         curr_contents = ''
@@ -547,14 +552,49 @@ class Anymatrix:
                     curr_contents = file.read()
             except:
                 return 'Error reading test function file.'
-        pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
+        
+        args = [3, 5, 8, 10, 15, 24, 25, 30, 31]
         # Open a file containing unit tests; if we need to regenerate the contents
         # or if the file is empty/non-existent, write in a function definition.
-        # if regenerate_tests or curr_contents == '':
-        #     with open(test_function_file, 'w') as file:
-        #         file.write('import numpy as np\n')
-        #         file.write('def test_binary(M):\n')
-        #         file.write('    return np.all((M == 0) | (M == 1))\n')
+        if regenerate_tests or curr_contents == '':
+            with open(test_function_file, 'w') as file:
+                file.write('import pytest\n'+
+                           'from main import Anymatrix\n' +
+                           'from main import Anymatrix\n'+
+                           'from anymatrix_check_props import anymatrix_check_props\n\n'+
+                           '@pytest.fixture\n'+
+                           'def am():\n'+
+                           '    am = Anymatrix()\n'+
+                           '    return am\n\n')
+                file.write(f'supported_properties = {supported_properties}\n')
+
+                # Add test for each matrix
+                for matrix_ID in self.matrix_IDs:
+                    ok_without_args = 1
+                    try:
+                        A = self.generate_matrix(matrix_ID, [])
+                    except:
+                        ok_without_args = 0
+
+                    
+                    
+                    if ok_without_args:
+                        file.write(f'def test_{matrix_ID.replace("/", "_")}(am):\n')
+                        file.write(f'    A = am.anymatrix("{matrix_ID}")\n')
+                    else:
+                        file.write(f'\n@pytest.mark.parametrize("args", {args})\n')
+                        file.write(f'def test_{matrix_ID.replace("/", "_")}(am, args):\n')
+                        file.write(f'    A = am.anymatrix("{matrix_ID}", args)\n')
+                    file.write(f'    if type(A) is tuple:\n')
+                    file.write(f'        A = A[0]\n')
+                    file.write(f'    anymatrix_check_props(am, A, "{matrix_ID}", supported_properties)\n')
+
+                    # add test for each suported property
+
+
+        # Execute tests
+        pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
+
     
         
 import numpy as np
@@ -563,4 +603,5 @@ if __name__ == "__main__":
     am = Anymatrix()
     am.anymatrix('scan')
     
-    print(am.test_anymatrix_properties(warnings_on=0))
+    print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=1))
+    # am.anymatrix("matlab/vander", 5)

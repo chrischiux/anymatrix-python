@@ -524,10 +524,43 @@ class Anymatrix:
         
         else:
             return self.generate_matrix(command, varargin[1:])
+    
+    def test_anymatrix_properties(self, regenerate_tests:int = 0, warnings_on:int = 0, results_out:int = 0):
+        self.scan_filesystem()
+        
+        root_path = self.root_path + '/testing/private'
+        
+        # Check which properties recognized by anymatrix have tests and throw
+        # warnings for those that can't be tested.
+        if warnings_on:
+            for prop in self.supported_properties:
+                if not os.path.isfile(self.root_path + f'/testing/private/test_{prop}.py'):
+                    print(f"Test for property {prop} was not found in anymatrix.")
+                    
+        M = self.matrix_IDs
+        
+        test_function_file = root_path + '/anymatrix_func_based_tests.py'
+        curr_contents = ''
+        if os.path.isfile(test_function_file):
+            try:
+                with open(test_function_file, 'r') as file:
+                    curr_contents = file.read()
+            except:
+                pass
+        
+        # Open a file containing unit tests; if we need to regenerate the contents
+        # or if the file is empty/non-existent, write in a function definition.
+        if regenerate_tests or curr_contents == '':
+            with open(test_function_file, 'w') as file:
+                file.write('import numpy as np\n')
+                file.write('def test_binary(M):\n')
+                file.write('    return np.all((M == 0) | (M == 1))\n')
+    
         
 import numpy as np
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
+    am.anymatrix('scan')
     
-    print(am.anymatrix('lookfor',"also"))
+    print(am.test_anymatrix_properties(warnings_on=1))

@@ -1,4 +1,4 @@
-import os, re
+import os, re, pytest
 import importlib.util
 
 import prop_map
@@ -528,7 +528,7 @@ class Anymatrix:
     def test_anymatrix_properties(self, regenerate_tests:int = 0, warnings_on:int = 0, results_out:int = 0):
         self.scan_filesystem()
         
-        root_path = self.root_path + '/testing/private'
+        root_path = self.root_path + '/testing'
         
         # Check which properties recognized by anymatrix have tests and throw
         # warnings for those that can't be tested.
@@ -546,15 +546,15 @@ class Anymatrix:
                 with open(test_function_file, 'r') as file:
                     curr_contents = file.read()
             except:
-                pass
-        
+                return 'Error reading test function file.'
+        pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
         # Open a file containing unit tests; if we need to regenerate the contents
         # or if the file is empty/non-existent, write in a function definition.
-        if regenerate_tests or curr_contents == '':
-            with open(test_function_file, 'w') as file:
-                file.write('import numpy as np\n')
-                file.write('def test_binary(M):\n')
-                file.write('    return np.all((M == 0) | (M == 1))\n')
+        # if regenerate_tests or curr_contents == '':
+        #     with open(test_function_file, 'w') as file:
+        #         file.write('import numpy as np\n')
+        #         file.write('def test_binary(M):\n')
+        #         file.write('    return np.all((M == 0) | (M == 1))\n')
     
         
 import numpy as np
@@ -563,4 +563,4 @@ if __name__ == "__main__":
     am = Anymatrix()
     am.anymatrix('scan')
     
-    print(am.test_anymatrix_properties(warnings_on=1))
+    print(am.test_anymatrix_properties(warnings_on=0))

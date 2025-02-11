@@ -1,8 +1,9 @@
-import rogues.matrices.wilkinson as rogues_wilkinson
+import numpy as np
+
 def wilkinson(n):
-    """
-    wilkinson array of size n where n must be odd.
-    This is what some others call a Wilkinson array for arbitrary n. Note
-    that Higham only uses this definition for n = 21
-    """
-    return rogues_wilkinson(n)
+
+    m = (n-1)/2
+    e = np.ones(n-1)
+    W = np.diag(np.abs(np.arange(-m, m+1))) + np.diag(e, 1) + np.diag(e, -1)
+    
+    return W

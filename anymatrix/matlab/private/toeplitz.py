@@ -1,4 +1,5 @@
 import rogues.utils.toeplitz as rogues_toeplitz
+import numpy
 def toeplitz(a, b=None):
     """
     toeplitz(a) returns a toeplitz matrix given "a", the first row of the
@@ -26,4 +27,8 @@ def toeplitz(a, b=None):
     See the wikipedia entry for more information and references (especially the
     following: http://ee.stanford.edu/~gray/toeplitz.pdf)
     """
+    if type(a) is not numpy.ndarray:
+        a = numpy.array(a)
+    if b is not None and type(b) is not numpy.ndarray:
+        b = numpy.array(b)
     return rogues_toeplitz(a, b)

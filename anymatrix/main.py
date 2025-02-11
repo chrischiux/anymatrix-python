@@ -585,7 +585,7 @@ class Anymatrix:
                 # Check if matrix already have test function in anymatrix_func_based_tests.py
                 if f"test_{matrix_ID.replace('/', '_')}" not in existent_test:
                     
-                    test_file = self.root_path + f'/private/am_unit_test.py'
+                    test_file = os.path.join(self.root_path, f'{matrix_ID.split('/')[0]}/private/am_unit_tests.py')
                     
                     # If tests provided with the group, read them in.
                     if os.path.isfile(test_file):
@@ -593,10 +593,10 @@ class Anymatrix:
                             tests = file.read()
                             if f"test_{matrix_ID.replace('/', '_')}" in tests:
                                 test_provided = 1
-                                function_body = re.search(f"def test_{matrix_ID.replace('/', '_')}\(am\):.*?def test", tests, re.DOTALL).group(0)
+                                pattern = rf'def {f"test_{matrix_ID.replace('/', '_')}" }\(.*?\):\n(    .*\n)*'
+                                function_body = re.search(pattern, tests)
 
-                                with open(test_function_file, 'a') as file:
-                                    file.write(contents)
+                                fileID.write('\n'+function_body.group(0))
                     
                     # Otherwise, generate some tests with 0 or 1 inputs args.
                     if not test_provided:
@@ -632,8 +632,8 @@ class Anymatrix:
                         # add test for each suported property
 
 
-            # Execute tests
-            pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
+        # Execute tests
+        pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
 
     
         

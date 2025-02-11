@@ -5,6 +5,6 @@ def vander(p):
        Produced useing np.vander
     """
     if type(p) is int or type(p) is float:
-      return 1
+      return np.array([[1]])
     else:
       return np.vander(p)

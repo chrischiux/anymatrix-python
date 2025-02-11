@@ -14,4 +14,4 @@ def anymatrix_check_props(am, M, matrix_ID, supported_properties):
             spec.loader.exec_module(module)
             function = getattr(module, f"test_{prop}")
             # test property
-            assert function(M)
+            assert function(M), f"Property {prop} failed for matrix {matrix_ID}"

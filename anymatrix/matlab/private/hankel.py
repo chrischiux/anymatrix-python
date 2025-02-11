@@ -1,4 +1,5 @@
 import rogues.matrices.hankel as rogues_hankel
+import numpy as np
 
 def hankel(a, b=None):
     """
@@ -38,5 +39,13 @@ def hankel(a, b=None):
            [ 8,  9, 11, 12, 13, 14, 15, 16, 17, 18],
            [ 9, 11, 12, 13, 14, 15, 16, 17, 18, 19]])
     """
-    
+    if type(a) is int or type(a) is float:
+        return np.array([[a]])
+    if type(a) is np.ndarray and a.ndim == 1:
+        return np.array([a])
+    # Convert to numpy arrays if not already
+    if type(a) is not np.ndarray:
+        a = np.array(a)
+    if b is not None and type(b) is not np.ndarray:
+        b = np.array(b)
     return rogues_hankel(a,b)

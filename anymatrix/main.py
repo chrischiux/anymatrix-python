@@ -5,6 +5,7 @@ import prop_map
 import prop_list
 
 import numpy
+import json
 
 class Anymatrix:
 
@@ -516,7 +517,10 @@ class Anymatrix:
                             parameter = self.matlab_format_parser(parameter)
                             # generate matrices
                             A = self.generate_matrix(matrix_ID, parameter)
-                            S.append(A)
+                            if type(A) is tuple:
+                                S.append(A[0])
+                            else:
+                                S.append(A)
                 return S
         # command & argument swaped.
         elif nargin > 1 and command in self.matrix_IDs and (arg == ('help') or arg ==('properties')):
@@ -663,6 +667,28 @@ class Anymatrix:
                     else:
                         for arg in default_args:
                             fileID.write(f'{matrix_ID}:{arg}\n')
+    
+    def export_test_set_to_json(self):
+        result = self.anymatrix("sets", "test_set")
+
+        # Check if test set is generated.
+        if result is None:
+            print("Error: Test set not found. Run generate_test_set() first.")
+            return
+
+        index = result[0]
+        matrices = result[1:]
+
+        data = []
+        for arg, matrix in zip(index, matrices):
+            data.append({
+                'matrix_ID': arg[0],
+                'parameters': arg[1],
+                'matrix': matrix.tolist()
+            })
+
+        with open(f"{self.root_path}/python_test_set.json", 'w') as file: 
+            json.dump(data, file, indent=4)
 
         
 import numpy as np
@@ -674,3 +700,4 @@ if __name__ == "__main__":
     # print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=1))
     # am.anymatrix("matlab/vander", 5)
     am.generate_test_set()
+    am.export_test_set_to_json()

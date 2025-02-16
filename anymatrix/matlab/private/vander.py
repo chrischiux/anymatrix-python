@@ -1,11 +1,10 @@
-import numpy as np
 def vander(p):
     """
     VAND   Vandermonde matrix.
-        Produced useing np.vander when p is a vector, and 1 when p is an int or float.
+       Produced useing np.vander
     """
-    if p == int or p == float:
-        return 1
+    
+    if type(p) is int or type(p) is float:
+      return np.array([[1]])
     else:
-        return np.vander(p)
-
+      return np.vander(p)

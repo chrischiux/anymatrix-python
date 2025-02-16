@@ -1,4 +1,4 @@
-import os, re
+import os, re, pytest
 import importlib.util
 
 import prop_map
@@ -20,6 +20,9 @@ class Anymatrix:
         self.matrix_IDs = []
         self.properties = []
         self.supported_properties = []
+
+        # self.scan_filesystem()
+
 
     def scan_filesystem(self):
         self.set_IDs = self.scan_sets()
@@ -516,7 +519,7 @@ class Anymatrix:
                             S.append(A)
                 return S
         # command & argument swaped.
-        elif command in self.matrix_IDs and (arg == ('help') or arg ==('properties')):
+        elif nargin > 1 and command in self.matrix_IDs and (arg == ('help') or arg ==('properties')):
             if 'help'.startswith(arg):
                 self.show_matrix_help(command)
             elif 'properties'.startswith(arg):
@@ -524,10 +527,121 @@ class Anymatrix:
         
         else:
             return self.generate_matrix(command, varargin[1:])
+    
+    def test_anymatrix_properties(self, regenerate_tests:int = 0, warnings_on:int = 0, results_out:int = 0):
+        self.scan_filesystem()
+        
+        root_path = self.root_path + '/testing'
+
+        args = [3, 5, 8, 10, 15, 24, 25, 30, 31]
+        
+        # Check which properties recognized by anymatrix have tests and throw
+        # warnings for those that can't be tested.
+        supported_properties = []
+        for prop in self.supported_properties:
+            if not os.path.isfile(self.root_path + f'/testing/private/test_{prop}.py'):
+                if warnings_on:
+                    print(f"Test for property {prop} was not found in anymatrix.")
+            else:
+                supported_properties.append(prop)
+        
+        header = ('import pytest\n'+
+                'from main import Anymatrix\n'+
+                'from main import Anymatrix\n'+
+                'from anymatrix_check_props import anymatrix_check_props\n\n'+
+                '@pytest.fixture\n'+
+                'def am():\n'+
+                '    am = Anymatrix()\n'+
+                '    return am\n\n'+
+                f'supported_properties = {supported_properties}\n')
+                    
+        test_function_file = root_path + '/anymatrix_func_based_tests.py'
+        curr_contents = ''
+        if os.path.isfile(test_function_file):
+            try:
+                with open(test_function_file, 'r') as file:
+                    curr_contents = file.read()
+            except:
+                return 'Error reading test function file.'
+        
+        # Open a file containing unit tests; if we need to regenerate the contents
+        # or if the file is empty/non-existent, write in a function definition.
+        if regenerate_tests or not curr_contents.startswith(header):
+            mode = 'w'
+        else:
+            mode = 'a'
+        
+        with open(test_function_file, mode) as fileID:
+            if mode == 'w':
+                fileID.write(header)
+            
+            # Generate unit tests for those matrices that are found to be not present
+            # in the testsuite.
+            for matrix_ID in self.matrix_IDs:
+                test_provided = 0
+                with open(test_function_file, 'r') as file:
+                    existent_test = file.read()
+            
+                # Check if matrix already have test function in anymatrix_func_based_tests.py
+                if f"test_{matrix_ID.replace('/', '_')}" not in existent_test:
+                    
+                    test_file = os.path.join(self.root_path, f'{matrix_ID.split('/')[0]}/private/am_unit_tests.py')
+                    
+                    # If tests provided with the group, read them in.
+                    if os.path.isfile(test_file):
+                        with open(test_file, 'r') as file:
+                            tests = file.read()
+                            if f"test_{matrix_ID.replace('/', '_')}" in tests:
+                                test_provided = 1
+                                pattern = rf'def {f"test_{matrix_ID.replace('/', '_')}" }\(.*?\):\n(    .*\n)*'
+                                function_body = re.search(pattern, tests)
+
+                                fileID.write('\n'+function_body.group(0))
+                    
+                    # Otherwise, generate some tests with 0 or 1 inputs args.
+                    if not test_provided:
+                        ok_without_args = 1
+                        try:
+                            A = self.generate_matrix(matrix_ID, [])
+                        except:
+                            ok_without_args = 0
+                        
+                        if ok_without_args:
+                            fileID.write(f'def test_{matrix_ID.replace("/", "_")}(am):\n')
+                            fileID.write(f'    A = am.anymatrix("{matrix_ID}")\n')
+                        else:
+                            fileID.write(f'\n@pytest.mark.parametrize("args", {args})\n')
+                            fileID.write(f'def test_{matrix_ID.replace("/", "_")}(am, args):\n')
+                            fileID.write(f'    A = am.anymatrix("{matrix_ID}", args)\n')
+                        fileID.write(f'    if type(A) is tuple:\n')
+                        fileID.write(f'        A = A[0]\n')
+                        fileID.write(f'    anymatrix_check_props(am, A, "{matrix_ID}", supported_properties)\n')
+
+            
+            
+            # # Open a file containing unit tests; if we need to regenerate the contents
+            # # or if the file is empty/non-existent, write in a function definition.
+            # if regenerate_tests or curr_contents == '':
+            #     with open(test_function_file, 'w') as file:
+                    
+
+            #         # Add test for each matrix
+            #         for matrix_ID in self.matrix_IDs:
+                        
+
+                        # add test for each suported property
+
+
+        # Execute tests
+        pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
+
+    
         
 import numpy as np
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
+    am.anymatrix('scan')
     
-    print(am.anymatrix('lookfor',"also"))
+    print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=0))
+    # am.anymatrix("matlab/vander", 5)

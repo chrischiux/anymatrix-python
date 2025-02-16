@@ -1,6 +1,9 @@
 import numpy as np
 def rosser():
-    """Classic symmetric eigenvalue test problem"""
+    """
+    ROSSER  rosser matrix.
+    m = rosser() returns the 8-by-8 matrix known as the "Rosser matrix".
+    Classic symmetric eigenvalue test problem"""
 
     return np.array([
         [611, 196, -192, 407, -8, -52, -49, 29],

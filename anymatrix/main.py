@@ -617,25 +617,53 @@ class Anymatrix:
                         fileID.write(f'        A = A[0]\n')
                         fileID.write(f'    anymatrix_check_props(am, A, "{matrix_ID}", supported_properties)\n')
 
-            
-            
-            # # Open a file containing unit tests; if we need to regenerate the contents
-            # # or if the file is empty/non-existent, write in a function definition.
-            # if regenerate_tests or curr_contents == '':
-            #     with open(test_function_file, 'w') as file:
-                    
-
-            #         # Add test for each matrix
-            #         for matrix_ID in self.matrix_IDs:
-                        
-
-                        # add test for each suported property
-
-
         # Execute tests
         pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
 
-    
+    def generate_test_set(self):
+        self.scan_filesystem()
+
+        default_args = [3, 5, 8, 10, 15, 24, 25, 30, 31]
+                    
+        test_set_file = self.root_path + '/sets/test_set.txt'
+        
+        with open(test_set_file, 'w') as fileID:
+            
+            # Generate unit tests for those matrices that are found to be not present
+            # in the testsuite.
+            for matrix_ID in self.matrix_IDs:
+                test_provided = 0
+            
+                test_file = os.path.join(self.root_path, f'{matrix_ID.split('/')[0]}/private/am_unit_tests.py')
+                
+                # If tests provided with the group, read them in.
+                if os.path.isfile(test_file):
+                    with open(test_file, 'r') as file:
+                        tests = file.read()
+                        if f"test_{matrix_ID.replace('/', '_')}" in tests:
+                            test_provided = 1
+                            pattern = rf'def {f"test_{matrix_ID.replace('/', '_')}" }\(.*?\):\n(    .*\n)*'
+                            match = re.search(pattern, tests)
+                            if match:
+                                pattern = r"am\.anymatrix\([^,]+,\s*(.*?)\)"
+                                matches = re.findall(pattern, match.group(0))
+                                for argument in matches:
+                                    fileID.write(f'{matrix_ID}:{argument}\n')
+                    
+                # Otherwise, generate some tests with 0 or 1 inputs args.
+                if not test_provided:
+                    ok_without_args = 1
+                    try:
+                        A = self.generate_matrix(matrix_ID, [])
+                    except:
+                        ok_without_args = 0
+                    
+                    if ok_without_args:
+                        fileID.write(f'{matrix_ID}:\n')
+                    else:
+                        for arg in default_args:
+                            fileID.write(f'{matrix_ID}:{arg}\n')
+
         
 import numpy as np
 if __name__ == "__main__":
@@ -643,5 +671,6 @@ if __name__ == "__main__":
     am = Anymatrix()
     am.anymatrix('scan')
     
-    print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=0))
+    # print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=1))
     # am.anymatrix("matlab/vander", 5)
+    am.generate_test_set()

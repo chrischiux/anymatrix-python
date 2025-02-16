@@ -24,12 +24,12 @@ def test_matlab_compan(am, args):
         A = A[0]
     anymatrix_check_props(am, A, "matlab/compan", supported_properties)
 
-@pytest.mark.parametrize("args", [3, 5, 8, 10, 15, 24, 25, 30, 31])
-def test_matlab_hadamard(am, args):
-    A = am.anymatrix("matlab/hadamard", args)
-    if type(A) is tuple:
-        A = A[0]
-    anymatrix_check_props(am, A, "matlab/hadamard", supported_properties)
+def test_matlab_hadamard(am):
+    A = am.anymatrix('matlab/hadamard', 2)
+    anymatrix_check_props(am, A, 'matlab/hadamard', supported_properties)
+    A = am.anymatrix('matlab/hadamard', 4)
+    anymatrix_check_props(am, A, 'matlab/hadamard', supported_properties)
+    A = am.anymatrix('matlab/hadamard', 40)
 
 @pytest.mark.parametrize("args", [3, 5, 8, 10, 15, 24, 25, 30, 31])
 def test_matlab_hankel(am, args):
@@ -78,12 +78,9 @@ def test_matlab_spiral(am, args):
         A = A[0]
     anymatrix_check_props(am, A, "matlab/spiral", supported_properties)
 
-@pytest.mark.parametrize("args", [3, 5, 8, 10, 15, 24, 25, 30, 31])
-def test_matlab_toeplitz(am, args):
-    A = am.anymatrix("matlab/toeplitz", args)
-    if type(A) is tuple:
-        A = A[0]
-    anymatrix_check_props(am, A, "matlab/toeplitz", supported_properties)
+def test_matlab_toeplitz(am):
+    A = am.anymatrix('matlab/toeplitz',[1, 1, 1], [1, 2, 2])
+    anymatrix_check_props(am, A, 'matlab/toeplitz', supported_properties)
 
 @pytest.mark.parametrize("args", [3, 5, 8, 10, 15, 24, 25, 30, 31])
 def test_matlab_vander(am, args):

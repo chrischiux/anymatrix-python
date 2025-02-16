@@ -1,3 +1,4 @@
+import numpy as np
 def vander(p):
     """
     VAND   Vandermonde matrix.

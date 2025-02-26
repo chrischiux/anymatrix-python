@@ -307,7 +307,7 @@ class Anymatrix:
                 i += 1
         return tuple(parameter)
         
-    def anymatrix(self, *args):
+    def anymatrix(self, *varargin):
         """ANYMATRIX  Interface for accessing the Anymatrix collections.
     ANYMATRIX is a user interface for the Anymatrix matrix collection.
     It provides commands to list matrices, groups and sets, search for
@@ -410,11 +410,10 @@ class Anymatrix:
     Numer. Algorithms 46(2), 189--194 (2007).
     https://doi.org/10.1007/s11075-007-9136-9"""
         # use matlab style variable names
-        nargin = len(args)
-        varargin = args
+        nargin = len(varargin)
 
         # Matrix ID pattern
-        matrix_ID_pat = r'^.*/.*$'
+        matrix_ID_pat = re.compile(r'[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+')
 
         if not self.files_scanned:
             self.supported_properties = prop_list.prop_list()
@@ -528,7 +527,8 @@ class Anymatrix:
                 self.show_matrix_help(command)
             elif 'properties'.startswith(arg):
                 return self.show_matrix_properties(command)
-        
+        elif 'test'.startswith(command):
+            print("group test not implemented yet.")
         else:
             return self.generate_matrix(command, varargin[1:])
     
@@ -698,6 +698,7 @@ if __name__ == "__main__":
     am.anymatrix('scan')
     
     # print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=1))
-    # am.anymatrix("matlab/vander", 5)
-    am.generate_test_set()
-    am.export_test_set_to_json()
+    # print(am.anymatrix("matlab/vander", "help"))
+    am.anymatrix("test")
+    # am.generate_test_set()
+    # am.export_test_set_to_json()

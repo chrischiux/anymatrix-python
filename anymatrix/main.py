@@ -433,7 +433,7 @@ class Anymatrix:
                 command = varargin[1]
                 arg = varargin[0]
             # Allow use of hyphens instead of underscores, but replace here.
-            if type(varargin[1]) is str and any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
+            if type(varargin[1]) is str and not any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
                 arg = arg.replace('-', '_')
         # Hyphens -> underscores in matrix IDs.
         command = command.replace('-', '_')

@@ -69,23 +69,36 @@ class Anymatrix:
     
     def search_by_properties(self, expression):
         IDs = []
+        expression_array = expression.split()
+        supported_properties_formated = [prop.replace(' ', '-') for prop in self.supported_properties]
         
+        # Combine 2 word properties into one word.
+        expression_length = len(expression_array)-1
+        for i in range(expression_length):
+            
+            # break if we reach the end of the array
+            if i == expression_length:
+                break
+            
+            if expression_array[i] not in ['and', 'or', 'not'] and expression_array[i+1] not in ['and', 'or', 'not']:
+                expression_array[i] = expression_array[i] + "-" +expression_array[i+1]
+                expression_array.pop(i+1)
+                expression_length -= 1
+                
+        # update expression to include hyphens
+        expression = ' '.join(expression_array)
+    
+        # evaluate the expression for each matrix
         for i, properties in enumerate(self.properties):
             new_expression = expression
-            expression_array = expression.split()
             
-            for i in range(len(expression_array)-1):
-                # Combine 2 word properties into one word.
-                if expression_array[i] not in ['and', 'or', 'not'] and expression_array[i+1] not in ['and', 'or', 'not']:
-                    expression_array[i] = expression_array[i] + "-" +expression_array[i+1]
-                    expression_array.pop(i+1)
-                # Replace hyphens with spaces.
-                # elif '-' in expression_array[i]:
-                #     expression_array[i] = expression_array[i].replace('-', ' ')
-            
+            # Replace spaces with hyphens in properties
+            properties = [prop.replace(' ', '-') for prop in properties]
+                
             # Create logical expression for evaluation
+            
             for word in expression_array:
-                if word in self.supported_properties:
+                if word in supported_properties_formated:
                     if word in properties:
                         new_expression = new_expression.replace(word, 'True')
                     else:
@@ -695,10 +708,10 @@ import numpy as np
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
-    am.anymatrix('scan')
+    print(am.anymatrix('properties', 'totally positive'))
     
     # print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=1))
     # print(am.anymatrix("matlab/vander", "help"))
-    am.anymatrix("test")
+    # am.anymatrix("test")
     # am.generate_test_set()
     # am.export_test_set_to_json()

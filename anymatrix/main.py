@@ -1,8 +1,7 @@
 import os, re, pytest
 import importlib.util
 
-import prop_map
-import prop_list
+from . import prop_list
 
 import numpy
 import json
@@ -683,6 +682,7 @@ class Anymatrix:
     
     def export_test_set_to_json(self):
         result = self.anymatrix("sets", "test_set")
+        np.set_printoptions(formatter={'float': '{:e}'.format})
 
         # Check if test set is generated.
         if result is None:
@@ -708,7 +708,9 @@ import numpy as np
 if __name__ == "__main__":
     root_path = os.path.dirname(os.path.abspath(__file__))
     am = Anymatrix()
-    print(am.anymatrix('properties', 'totally positive'))
+    # print(am.anymatrix('properties', 'totally positive'))
+    np.set_printoptions(formatter={'float': '{:e}'.format})
+    print(am.anymatrix('matlab/pascal', 30)[28,29])
     
     # print(am.test_anymatrix_properties(warnings_on=0, regenerate_tests=1))
     # print(am.anymatrix("matlab/vander", "help"))

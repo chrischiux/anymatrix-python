@@ -22,17 +22,27 @@ for i in range(len(python_data)-1):
     matlab_matrix = matlab_data[i]['matrix']
 
     # compare the two matrices WITH tolerance
-    if numpy.allclose(python_matrix,matlab_matrix):
+    if numpy.array_equal(python_matrix,matlab_matrix):
         success_count += 1
         continue
     
     # try putting matlab result in 1x1 2d matrix and compare
-    if numpy.allclose(python_matrix, [[matlab_matrix]]):
+    if numpy.array_equal(python_matrix, [[matlab_matrix]]):
         success_count += 1
         continue
     
     print(f"{python_data[i]['matrix_ID']} {python_data[i]['parameters']} is not equal")
     fail_count += 1
+    
+    # find row and column of the mismatched element
+    for row in range(len(python_matrix)):
+        for col in range(len(python_matrix[0])):
+            if python_matrix[row][col] != matlab_matrix[row][col]:
+                print(f"Row: {row}, Column: {col}")
+                print(f"Python: {python_matrix[row][col]}")
+                print(f"Matlab: {matlab_matrix[row][col]}")
+                print("\n")
+                break
         
 
 print(f"Success: {success_count}")

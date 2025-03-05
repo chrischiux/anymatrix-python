@@ -56,7 +56,7 @@ def pascal(n, k=0, classname='double'):
         datatype = np.float64
     
     p = np.diag((-1) ** np.arange(n, dtype=datatype))
-    p[:, 0] = np.ones(n)
+    p[:, 1] = np.ones(n,  dtype=datatype)
 
     #  Generate the Pascal Cholesky factor (up to signs).
     for j in range(1, n - 1):

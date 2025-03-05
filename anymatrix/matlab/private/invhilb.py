@@ -39,5 +39,3 @@ def invhilb(n, classname='double'):
       p = ((n - i) * p * (n + i)) / (i ** 2)
    
    return H
-
-invhilb(3)

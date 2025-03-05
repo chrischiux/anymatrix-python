@@ -534,7 +534,7 @@ class Anymatrix:
                                 S.append(A)
                 return S
         # command & argument swaped.
-        elif nargin > 1 and command in self.matrix_IDs and (arg == ('help') or arg ==('properties')):
+        elif nargin > 1 and command in self.matrix_IDs and type(arg) == str and (arg == ('help') or arg ==('properties')):
             if 'help'.startswith(arg):
                 self.show_matrix_help(command)
             elif 'properties'.startswith(arg):

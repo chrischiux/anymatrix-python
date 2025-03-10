@@ -1,7 +1,7 @@
 import numpy as np
+import rogues.matrices.pascal as rogues_pascal
 
-def pascal(n, k=0, classname='double'):
-
+def pascal(*args, **kwargs):
     """
     PASCAL  Pascal matrix.
         p = pascal(n) is the pascal matrix of order n: a symmetric positive
@@ -48,20 +48,45 @@ def pascal(n, k=0, classname='double'):
     Fork of rogues module pascal function
     https://github.com/macd/rogues
     """
+    # check number of argument
+    nargin = len(args)
+    if nargin == 0:
+        raise ValueError("invalid input arguments")
+    elif nargin == 1:
+        n = args[0]
+        k = 0
+        classname = 'double'
+    elif nargin == 2:
+        n = args[0]
+        if type(args[1]) is str:
+            classname = args[1]
+            k = 0
+        elif type(args[1]) is int:
+            k = args[1]
+            classname = 'double'
+        else:
+            raise ValueError("second argument must be either an integer or a string")
+    elif nargin == 3:
+        n = args[0]
+        k = args[1]
+        classname = args[2]
+    
     if classname not in ['single', 'double']:
         raise ValueError("classname must be either 'single' or 'double'")
     elif classname == 'single':
-        datatype = np.float32
+        classname = np.float32
     else:
-        datatype = np.float64
+        classname = np.float64
     
-    p = np.diag((-1) ** np.arange(n, dtype=datatype))
-    p[:, 1] = np.ones(n,  dtype=datatype)
+    # Matrix generation
+    p = np.diag((-1) ** np.arange(n, dtype=classname))
+    p[:, 0] = np.ones(n, dtype=classname)
 
     #  Generate the Pascal Cholesky factor (up to signs).
     for j in range(1, n - 1):
         for i in range(j + 1, n):
             p[i, j] = p[i - 1, j] - p[i - 1, j - 1]
+
 
     if k == 0:
         p = p @ p.T

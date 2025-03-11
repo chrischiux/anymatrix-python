@@ -69,18 +69,19 @@ class Anymatrix:
     def search_by_properties(self, expression):
         IDs = []
         expression_array = expression.split()
-        supported_properties_formated = [prop.replace(' ', '-') for prop in self.supported_properties]
+        supported_properties_formated = [prop.replace(' ', '_') for prop in self.supported_properties]
+        supported_properties_formated = [prop.replace('-', '_') for prop in supported_properties_formated]
         
         # Combine 2 word properties into one word.
         expression_length = len(expression_array)-1
         for i in range(expression_length):
             
             # break if we reach the end of the array
-            if i == expression_length:
+            if i >= expression_length:
                 break
             
             if expression_array[i] not in ['and', 'or', 'not'] and expression_array[i+1] not in ['and', 'or', 'not']:
-                expression_array[i] = expression_array[i] + "-" +expression_array[i+1]
+                expression_array[i] = expression_array[i] + "_" +expression_array[i+1]
                 expression_array.pop(i+1)
                 expression_length -= 1
                 
@@ -92,16 +93,17 @@ class Anymatrix:
             new_expression = expression
             
             # Replace spaces with hyphens in properties
-            properties = [prop.replace(' ', '-') for prop in properties]
+            properties = [prop.replace(' ', '_') for prop in properties]
+            properties = [prop.replace('-', '_') for prop in properties]
                 
             # Create logical expression for evaluation
             
             for word in expression_array:
                 if word in supported_properties_formated:
                     if word in properties:
-                        new_expression = new_expression.replace(word, 'True')
+                        new_expression = new_expression.replace(word, 'True', 1)
                     else:
-                        new_expression = new_expression.replace(word, 'False')
+                        new_expression = new_expression.replace(word, 'False', 1)
             try:
                 if eval(new_expression):
                     IDs.append(self.matrix_IDs[i])
@@ -242,6 +244,7 @@ class Anymatrix:
         # Add property 'built-in' for the built-in matrices.
         for i, matrix_ID in enumerate(matrix_IDs):
             if any(matrix_ID.startswith(group) for group in self.built_in_groups):
+            # if any(group.startswith(matrix_ID) for group in self.built_in_groups):
                 P[i].append('built-in')
 
         # Add parent properties if not specified.

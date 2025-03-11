@@ -1,6 +1,9 @@
+import sys, os
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
 import pytest
-from main import Anymatrix
-from main import Anymatrix
+from anymatrix import Anymatrix
 from anymatrix_check_props import anymatrix_check_props
 
 @pytest.fixture
@@ -8,7 +11,7 @@ def am():
     am = Anymatrix()
     return am
 
-supported_properties = ['bidiagonal', 'binary', 'complex', 'hankel', 'hermitian', 'hessenberg', 'integer', 'nonnegative', 'permutation', 'positive', 'square', 'stochastic', 'symmetric', 'toeplitz', 'triangular', 'tridiagonal']
+supported_properties = []
 
 @pytest.mark.parametrize("args", [3, 5, 8, 10, 15, 24, 25, 30, 31])
 def test_core_beta(am, args):

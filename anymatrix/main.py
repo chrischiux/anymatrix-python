@@ -564,9 +564,12 @@ class Anymatrix:
             else:
                 supported_properties.append(prop)
         
-        header = ('import pytest\n'+
-                'from main import Anymatrix\n'+
-                'from main import Anymatrix\n'+
+        header = ('import sys, os\n'+
+                'current = os.path.dirname(os.path.realpath(__file__))\n'+
+                'parent = os.path.dirname(current)\n'+
+                'sys.path.append(parent)\n'+
+                'import pytest\n'+
+                'from anymatrix import Anymatrix\n'+
                 'from anymatrix_check_props import anymatrix_check_props\n\n'+
                 '@pytest.fixture\n'+
                 'def am():\n'+

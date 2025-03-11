@@ -11,6 +11,7 @@ import matlab.engine
 import itertools
 import numpy as np
 from collections import Counter
+from pathlib import Path
 
 @pytest.fixture(scope="module")
 def python_am():
@@ -20,7 +21,9 @@ def python_am():
 @pytest.fixture(scope="module")
 def matlab_eng():
     eng = matlab.engine.start_matlab()
-    eng.cd(r"C:\Users\propo\OneDrive - University of Leeds\Documents\MATLAB\anymatrix", nargout=0)
+    # Insert path to Anymatrix-MATLAB installation
+    current_file_path = str(Path(__file__).resolve().parent.parent)
+    eng.cd(current_file_path + r"/anymatrix-matlab", nargout=0)
     return eng
 
 def test_property_scan(python_am, matlab_eng):

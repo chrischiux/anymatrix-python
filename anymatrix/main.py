@@ -340,6 +340,21 @@ class Anymatrix:
             else:
                 # shutil.rmtree(group_folder)
                 pass
+        else: # Group exists. Run git pull to update it.
+            if not os.path.isdir(group_folder + '/private/.git'):
+                print("Specified group is not a git group.")
+                return
+            else:
+                current_dir = os.getcwd()
+                os.chdir(group_folder+'/private')
+                result = subprocess.run(
+                    ['git', 'pull'],
+                    check=True,
+                    text=True,
+                    capture_output=True
+                )
+                os.chdir(current_dir)
+                print(result.stdout.strip())
 
     def anymatrix(self, *varargin):
         """ANYMATRIX  Interface for accessing the Anymatrix collections.

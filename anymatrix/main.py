@@ -1,10 +1,10 @@
 import os, re, pytest
 import importlib.util
-
 from . import prop_list
-
-import numpy
 import json
+import subprocess
+import shutil
+
 
 class Anymatrix:
 
@@ -321,7 +321,26 @@ class Anymatrix:
             else:
                 i += 1
         return tuple(parameter)
-        
+
+    def update_git_group(self, group_ID, repo_ID):
+        group_folder = self.root_path + '/' + group_ID + '/'
+        # If the group does not exist locally, create folders and clone it.
+        if not os.path.isdir(group_folder):
+            if repo_ID.count('/') > 1 or ':' in repo_ID or '@' in repo_ID:
+                repo_url = repo_ID
+            else:
+                repo_url = 'https://github.com/' + repo_ID + '.git'
+
+            cmd = ['git', 'clone', repo_url, group_folder+'/private']
+
+            status = subprocess.run(cmd, capture_output=True, text=True)
+
+            if status.returncode == 0:
+                print(f"Anymatrix remote group cloned.")
+            else:
+                # shutil.rmtree(group_folder)
+                pass
+
     def anymatrix(self, *varargin):
         """ANYMATRIX  Interface for accessing the Anymatrix collections.
     ANYMATRIX is a user interface for the Anymatrix matrix collection.
@@ -485,8 +504,9 @@ class Anymatrix:
             elif nargin == 2:
                 return [matrix_id for matrix_id in self.matrix_IDs if matrix_id.startswith(f"{arg}/")]
             else:
-                self.update_git_group(arg, varargin[1])
-        
+                self.update_git_group(varargin[1], varargin[2])
+                # print("Not implemented yet.")
+
         elif 'help'.startswith(command):
             if nargin == 1:
                 help(Anymatrix.anymatrix)

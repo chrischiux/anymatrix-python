@@ -1,31 +1,6 @@
-import sys
-import os
-
-current = os.path.dirname(os.path.realpath(__file__))
-parent = os.path.dirname(current)
-sys.path.append(parent)
-
 import pytest
-from anymatrix import Anymatrix
-import matlab.engine
 import matlab
-import itertools
 import numpy as np
-from collections import Counter
-
-
-@pytest.fixture
-def python_am():
-    am = Anymatrix()
-    return am
-
-
-@pytest.fixture
-def matlab_eng():
-    eng = matlab.engine.start_matlab()
-    eng.cd(r"C:\Users\propo\OneDrive - University of Leeds\Documents\MATLAB\anymatrix", nargout=0)
-    return eng
-
 
 def test_matlab_rosser(python_am, matlab_eng):
     python_result = python_am.anymatrix("matlab/rosser")

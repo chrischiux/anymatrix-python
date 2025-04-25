@@ -1,8 +1,12 @@
 import importlib.util, os
+import numpy as np
 
 def anymatrix_check_props(am, M, matrix_ID, supported_properties):
     # Get properties of matrix_ID
     properties = am.show_matrix_properties(matrix_ID)
+
+    if type(M) == np.ndarray and M.dtype == object:
+        M = M.astype(np.float64)
 
     # test for assertion for each suported property
     for prop in properties:

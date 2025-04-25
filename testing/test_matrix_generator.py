@@ -82,7 +82,7 @@ def test_core_beta(python_am, matlab_eng, arg):
 
 # array input setup
 input_arg = []
-for i in [10,100,1000]:
+for i in [8, 128, 256, 512, 1024]:
     input_arg.append(list(range(1, i+1)))
 
 

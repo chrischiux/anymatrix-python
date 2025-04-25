@@ -1,6 +1,8 @@
-import rogues.matrices.compan as rogues_compan
 import numpy as np
-
+""""
+COMPAN  Complementary matrix.
+A = COMPAN(U) returns the complementary matrix of the vector U.
+Source code from: https://github.com/macd/rogues"""
 def compan(u):
 
     if type(u) == int or type(u) == float:
@@ -26,6 +28,3 @@ def compan(u):
         return A[0,0]
     
     return A
- 
-# Copy docstring from original function
-compan.__doc__ = rogues_compan.__doc__

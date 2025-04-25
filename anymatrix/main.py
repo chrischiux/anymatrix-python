@@ -92,7 +92,7 @@ class Anymatrix:
         for i, properties in enumerate(self.properties):
             new_expression = expression
             
-            # Replace spaces with hyphens in properties
+            # Replace spaces with underscore in properties
             properties = [prop.replace(' ', '_') for prop in properties]
             properties = [prop.replace('-', '_') for prop in properties]
                 
@@ -477,11 +477,15 @@ class Anymatrix:
         command = varargin[0]
         if nargin >= 2:
             arg = varargin[1]
-            if type(varargin[1]) is str and any(c.startswith(valid_command) for c in varargin[1] for valid_command in ['properties', 'groups', 'sets', 'all', 'scan', 'help', 'test', 'lookfor', 'contents']):
+            if type(varargin[1]) is str and any(varargin[1].startswith(valid_command) for valid_command in
+                                                ['properties', 'groups', 'sets', 'all', 'scan', 'help', 'test',
+                                                 'lookfor', 'contents']):
                 command = varargin[1]
                 arg = varargin[0]
             # Allow use of hyphens instead of underscores, but replace here.
-            if type(varargin[1]) is str and not any(c.startswith(valid_command) for c in command for valid_command in ['properties', 'lookfor', 'sets']):
+            if type(arg) is str and not any(
+                    command.startswith(valid_command) for valid_command in
+                    ['lookfor', 'sets']):
                 arg = arg.replace('-', '_')
         # Hyphens -> underscores in matrix IDs.
         command = command.replace('-', '_')

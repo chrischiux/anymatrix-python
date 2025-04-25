@@ -19,7 +19,7 @@ class Anymatrix:
         self.group_IDs = []
         self.matrix_IDs = []
         self.properties = []
-        self.supported_properties = []
+        self.supported_properties = prop_list.prop_list()
 
         # self.scan_filesystem()
 
@@ -465,7 +465,6 @@ class Anymatrix:
         matrix_ID_pat = re.compile(r'[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+')
 
         if not self.files_scanned:
-            self.supported_properties = prop_list.prop_list()
             self.scan_filesystem()
             self.files_scanned = True
             print("Automatic anymatrix scanning done.")
@@ -675,7 +674,11 @@ class Anymatrix:
                         fileID.write(f'    anymatrix_check_props(am, A, "{matrix_ID}", supported_properties)\n')
 
         # Execute tests
-        pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
+        results = pytest.main([f"{self.root_path}/testing/anymatrix_func_based_tests.py"])
+        if results_out:
+            return results
+        else:
+            return None
 
     def generate_test_set(self):
         self.scan_filesystem()
